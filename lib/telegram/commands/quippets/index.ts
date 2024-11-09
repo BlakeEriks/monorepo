@@ -1,12 +1,12 @@
 import { enterScene } from '@/lib/util/telegraf'
-import type { HabitCommand } from '../../types'
 
+import { QuippetCommand } from '../../types'
 import { NEW_BOOK_SCENE, newBookScene } from './newBook'
 import { NEW_QUOTE_SCENE, newQuoteScene } from './newQuote'
 
 export const QUOTE_SCENES = [newQuoteScene, newBookScene]
 
-export const QUOTE_COMMANDS: HabitCommand[] = [
+export const QUOTE_COMMANDS: QuippetCommand[] = [
   // {
   //   name: 'list_habits',
   //   description: 'List the habits you are tracking',

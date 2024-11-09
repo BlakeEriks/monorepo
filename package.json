@@ -20,13 +20,14 @@
     "watch": [
       "lib"
     ],
-    "exec": "npx tsc lib/telegram/bots/index.ts",
+    "exec": "tsx lib/telegram/bots/index.ts",
     "ext": "ts, js, mts, mjs"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.687.0",
     "@notionhq/client": "^2.2.15",
     "@prisma/client": "^5.22.0",
+    "moment-timezone": "^0.5.46",
     "next": "15.0.3",
     "openai": "^4.71.1",
     "react": "19.0.0-rc-66855b96-20241106",

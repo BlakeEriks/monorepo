@@ -1,8 +1,8 @@
+import { QUOTE_COMMANDS, QUOTE_SCENES } from '@/lib/telegram/commands/quippets'
+import attachUser from '@/lib/telegram/middlewares/attachUser'
+import type { QuippetContext } from '@/lib/telegram/types'
 import { Markup, Scenes, session, Telegraf } from 'telegraf'
 import { message } from 'telegraf/filters'
-import { QUOTE_COMMANDS, QUOTE_SCENES } from './commands/quippets'
-import attachUser from './middlewares/attachUser'
-import type { QuippetContext } from './types'
 
 const commandGroups = [
   { name: 'Quotes', commands: QUOTE_COMMANDS },
@@ -52,7 +52,7 @@ quippetBot.use(stage.middleware())
 
 const allCommands = commandGroups.flatMap(({ commands }) => commands)
 for (const { name, action } of allCommands) {
-  quippetBot.command(name, action as any)
+  quippetBot.command(name, action)
 }
 
 // Default

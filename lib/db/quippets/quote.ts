@@ -1,4 +1,4 @@
-import { PrismaClient, type Prisma, type Quote } from '@prisma/client'
+import { PrismaClient, type Prisma } from '@prisma/client'
 
 const prisma = new PrismaClient({})
 export const getQuotes = async (userId: number) =>
@@ -57,6 +57,10 @@ export const toggleFavorite = async (userId: number, quoteId: number) => {
 export const getQuoteById = (quoteId: number) => prisma.quote.findUnique({ where: { id: quoteId } })
 
 export const sampleQuotesByUser = (userId: number, count: number) =>
-  prisma.$queryRawUnsafe(
-    `SELECT * FROM "Quote" WHERE "deleted" = false AND "userId" = ${userId} ORDER BY RANDOM() LIMIT ${count};`
-  ) as Promise<Quote[]>
+  prisma.quote.findMany({
+    where: {
+      userId,
+      deleted: false,
+    },
+    take: count,
+  })

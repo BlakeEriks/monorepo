@@ -1,12 +1,12 @@
+import { HABIT_COMMANDS, HABIT_SCENES } from '@/lib/telegram/commands/habits'
+import { REMINDER_COMMANDS, REMINDER_SCENES } from '@/lib/telegram/commands/reminders'
+import { TIMEZONE_COMMANDS, TIMEZONE_SCENES } from '@/lib/telegram/commands/timezone'
+import attachHabits from '@/lib/telegram/middlewares/attachHabits'
+import attachUser from '@/lib/telegram/middlewares/attachUser'
+import saveMessage from '@/lib/telegram/middlewares/saveMessage'
+import type { HabitContext } from '@/lib/telegram/types'
 import { Markup, Scenes, session, Telegraf } from 'telegraf'
 import { message } from 'telegraf/filters'
-import { HABIT_COMMANDS, HABIT_SCENES } from './commands/habits'
-import { REMINDER_COMMANDS, REMINDER_SCENES } from './commands/reminders'
-import { TIMEZONE_COMMANDS, TIMEZONE_SCENES } from './commands/timezone'
-import attachHabits from './middlewares/attachHabits'
-import attachUser from './middlewares/attachUser'
-import saveMessage from './middlewares/saveMessage'
-import type { HabitContext } from './types'
 
 const commandGroups = [
   { name: 'Habits', commands: HABIT_COMMANDS },
@@ -50,7 +50,7 @@ habitBot.use(stage.middleware())
 
 const allCommands = commandGroups.flatMap(({ commands }) => commands)
 for (const { name, action } of allCommands) {
-  habitBot.command(name, action as any)
+  habitBot.command(name, action)
 }
 
 // Default
