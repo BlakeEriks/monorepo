@@ -3,24 +3,47 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "dotenv -e .env.dev next dev",
+    "dev:bot": "dotenv -e .env.dev npx nodemon",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "migrate:dev": "dotenv -e .env.dev npx prisma migrate dev"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "**/*.test.ts",
+      "**/*.spec.ts",
+      ".git",
+      "node_modules"
+    ],
+    "watch": [
+      "lib"
+    ],
+    "exec": "npx tsc lib/telegram/bots/index.ts",
+    "ext": "ts, js, mts, mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.687.0",
+    "@notionhq/client": "^2.2.15",
+    "@prisma/client": "^5.22.0",
+    "next": "15.0.3",
+    "openai": "^4.71.1",
     "react": "19.0.0-rc-66855b96-20241106",
     "react-dom": "19.0.0-rc-66855b96-20241106",
-    "next": "15.0.3"
+    "telegraf": "^4.16.3",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "typescript": "^5",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "dotenv-cli": "^7.4.2",
+    "eslint": "^8",
+    "eslint-config-next": "15.0.3",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "eslint": "^8",
-    "eslint-config-next": "15.0.3"
+    "ts-node": "^10.9.2",
+    "typescript": "^5"
   }
 }
