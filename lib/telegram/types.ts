@@ -1,10 +1,11 @@
 import type { Habit, Prisma, Quote, Reminder, User } from '@prisma/client'
 import type { Context, Scenes } from 'telegraf'
+import { HabitProperty, NotionHabitDatabase } from '../util/notion/NotionHabitDatabase'
 
 /* Habit types */
-type HabitWithReminders = Prisma.HabitGetPayload<{
-  include: { reminders: true }
-}>
+// type HabitWithReminders = Prisma.HabitGetPayload<{
+//   include: { reminders: true }
+// }>
 
 export enum HabitDataType {
   NUMBER = 'number',
@@ -14,17 +15,24 @@ export enum HabitDataType {
 
 interface HabitSession extends Scenes.SceneSession {
   expecting: keyof Habit | keyof Reminder
-  habit: Partial<Habit>
+  habit: HabitProperty
   currentHabit: number
   habitLogs: Prisma.HabitLogCreateManyInput[]
 }
 
 export interface HabitContext extends Context {
   user: User
-  habits: HabitWithReminders[]
+  habitDatabase: NotionHabitDatabase
   session: HabitSession
   scene: Scenes.SceneContextScene<HabitContext>
 }
+
+// export interface HabitContext extends Context {
+//   user: User
+//   habits: HabitWithReminders[]
+//   session: HabitSession
+//   scene: Scenes.SceneContextScene<HabitContext>
+// }
 
 export interface HabitCommand {
   name: string
