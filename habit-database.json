@@ -1,0 +1,88 @@
+{
+  "object": "database",
+  "id": "139222ac-f954-80a0-b3dd-eba6cd28e9fe",
+  "cover": {
+    "type": "external",
+    "external": {
+      "url": "https://www.notion.so/images/page-cover/solid_red.png"
+    }
+  },
+  "icon": {
+    "type": "emoji",
+    "emoji": "🛠️"
+  },
+  "created_time": "2024-11-09T23:34:00.000Z",
+  "created_by": {
+    "object": "user",
+    "id": "538d43d9-047e-4c43-b6c1-bba6ec6e30ca"
+  },
+  "last_edited_by": {
+    "object": "user",
+    "id": "538d43d9-047e-4c43-b6c1-bba6ec6e30ca"
+  },
+  "last_edited_time": "2024-11-10T01:29:00.000Z",
+  "title": [
+    {
+      "type": "text",
+      "text": {
+        "content": "Habit Data Template",
+        "link": null
+      },
+      "annotations": {
+        "bold": false,
+        "italic": false,
+        "strikethrough": false,
+        "underline": false,
+        "code": false,
+        "color": "default"
+      },
+      "plain_text": "Habit Data Template",
+      "href": null
+    }
+  ],
+  "description": [],
+  "is_inline": false,
+  "properties": {
+    "⏰ Wakeup Time": {
+      "id": "Fz%7DN",
+      "name": "⏰ Wakeup Time",
+      "type": "date",
+      "date": {}
+    },
+    "🥶 Cold Shower": {
+      "id": "To%3FF",
+      "name": "🥶 Cold Shower",
+      "type": "checkbox",
+      "checkbox": {}
+    },
+    "💪 Pushups": {
+      "id": "_%5CGq",
+      "name": "💪 Pushups",
+      "type": "number",
+      "number": {
+        "format": "number"
+      }
+    },
+    "Date": {
+      "id": "gd%5Cf",
+      "name": "Date",
+      "type": "date",
+      "date": {}
+    },
+    "Title": {
+      "id": "title",
+      "name": "Title",
+      "type": "title",
+      "title": {}
+    }
+  },
+  "parent": {
+    "type": "page_id",
+    "page_id": "0b5a19c0-730c-4c71-a4b7-c24bcfc17e9a"
+  },
+  "url": "https://www.notion.so/139222acf95480a0b3ddeba6cd28e9fe",
+  "public_url": null,
+  "archived": false,
+  "in_trash": false,
+  "request_id": "5366c04e-92d8-4143-b87c-d42aedab8158"
+}
