@@ -1,5 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Client } from '@notionhq/client'
-
 const READING_LIST_DATABASE_ID = '92b3e821-1cb9-4b34-86cd-a892ba2d3332'
 
 const notion = new Client({ auth: process.env.NOTION_API_KEY })

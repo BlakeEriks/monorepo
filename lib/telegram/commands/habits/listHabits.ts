@@ -1,11 +1,13 @@
 import type { HabitContext } from '../../types'
 
 const listHabits = async (ctx: HabitContext) => {
-  if (!ctx.habits.length) {
-    return ctx.reply('You are not tracking any habits yet. Use /new to start tracking a habit.')
+  if (!ctx.habitDatabase) {
+    return ctx.reply(
+      "Unable to find habit database. Try /setDatabaseId to set it, and make sure you've granted access to the extension"
+    )
   }
 
-  const habitStr = ctx.habits.map((habit, idx) => `${idx + 1}: ${habit.name}`).join('\n')
+  const habitStr = await ctx.habitDatabase.prettyPrintHabits()
   return ctx.reply(`Here's a list of the habits you are tracking:\n\n${habitStr}`)
 }
 
