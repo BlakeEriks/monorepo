@@ -8,7 +8,9 @@ interface ContextWithScene extends Context {
 export const enterScene = (sceneName: string) => (ctx: ContextWithScene) =>
   ctx.scene.enter(sceneName)
 
-export const replyAndLeave = (message: string) => async (ctx: any) => {
-  await ctx.replyWithHTML(message, Markup.removeKeyboard())
-  return ctx.scene.leave()
-}
+export const replyAndLeave =
+  (message: string, removeKeyboard = false) =>
+  async (ctx: any) => {
+    await ctx.replyWithHTML(message, removeKeyboard ? Markup.removeKeyboard() : undefined)
+    return ctx.scene.leave()
+  }

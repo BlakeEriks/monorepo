@@ -7,12 +7,6 @@ import { HabitProperty, NotionHabitDatabase } from '../util/notion/NotionHabitDa
 //   include: { reminders: true }
 // }>
 
-export enum HabitDataType {
-  NUMBER = 'number',
-  BOOL = 'bool',
-  TIME = 'time',
-}
-
 interface HabitSession extends Scenes.SceneSession {
   expecting: keyof Habit | keyof Reminder
   habit: HabitProperty

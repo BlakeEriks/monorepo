@@ -2,7 +2,7 @@
 import { Client } from '@notionhq/client'
 import { GetDatabaseResponse, PageObjectResponse } from '@notionhq/client/build/src/api-endpoints'
 
-enum NotionPropertyType {
+export enum NotionPropertyType {
   CHECKBOX = 'checkbox',
   NUMBER = 'number',
   DATE = 'date',
@@ -47,6 +47,10 @@ export class NotionHabitDatabase {
     return Object.values(database.properties)
       .filter(({ name }) => !this.nonHabitProperties.includes(name))
       .map(property => new HabitProperty(property))
+  }
+
+  async getHabitByEmoji(emoji: string) {
+    return (await this.getHabits()).find(habit => habit.emoji === emoji)
   }
 
   async prettyPrintHabits() {
