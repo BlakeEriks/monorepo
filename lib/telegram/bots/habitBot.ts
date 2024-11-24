@@ -10,6 +10,7 @@ import { enterScene } from '@/lib/util/telegraf'
 import { Markup, Scenes, session, Telegraf } from 'telegraf'
 import { message } from 'telegraf/filters'
 import { LOG_HABIT_SCENE } from '../commands/habits/logHabit'
+import PostgresSessionStore from '../middlewares/session/sessionStore'
 
 const commandGroups = [
   { name: 'Habit Commands', commands: HABIT_COMMANDS },
@@ -56,7 +57,12 @@ const stage = new Scenes.Stage<HabitContext>([
 ])
 
 habitBot.use(Telegraf.log())
-habitBot.use(session())
+habitBot.use(
+  session({
+    getSessionKey: ({ chat }) => chat?.id.toString() ?? '',
+    store: new PostgresSessionStore(),
+  })
+)
 habitBot.use(attachUser)
 habitBot.use(attachHabits)
 habitBot.use(saveMessage)

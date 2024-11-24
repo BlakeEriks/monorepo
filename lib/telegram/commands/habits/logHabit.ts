@@ -59,7 +59,7 @@ const handleHabitSelection = async (emoji: string, ctx: HabitContext) => {
 
 const handleRecordHabit = async (habit: HabitProperty, value: string, ctx: HabitContext) => {
   await ctx.habitDatabase.logHabit(habit.id, value)
-  return replyAndLeave(`Habit "${habit.name}" logged successfully with value: ${value}!`)(ctx)
+  return replyAndLeave(`${habit.name} Saved!`)(ctx)
 }
 
 export default logHabitScene
