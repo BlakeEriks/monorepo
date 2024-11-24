@@ -1,11 +1,11 @@
 import { getHabitLogsSince } from '@/lib/db/habits'
 import type { HabitContext } from '../../types'
-import { HabitDataType } from '../../types'
+// import { HabitDataType } from '../../types'
 
 const habitSummary = async (ctx: HabitContext) => {
-  if (!ctx.habits.length) {
-    return ctx.reply('You are not tracking any habits yet. Use /new to start tracking a habit.')
-  }
+  // if (!ctx.habits.length) {
+  //   return ctx.reply('You are not tracking any habits yet. Use /new to start tracking a habit.')
+  // }
 
   const oneWeekAgo = new Date()
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
@@ -16,25 +16,25 @@ const habitSummary = async (ctx: HabitContext) => {
   }
 
   const summary: string[] = []
-  for (const habit of ctx.habits) {
-    const habitLogsForHabit = habitLogs.filter(log => log.habitId === habit.id)
+  // for (const habit of ctx.habits) {
+  //   const habitLogsForHabit = habitLogs.filter(log => log.habitId === habit.id)
 
-    if (habit.dataType === HabitDataType.BOOL) {
-      const count = habitLogsForHabit.reduce(
-        (acc, habitLog) => +(habitLog.value === 'yes') + acc,
-        0
-      )
-      summary.push(`[${habit.name}] Total: ${count} / 7`)
-    } else if (habit.dataType === HabitDataType.NUMBER) {
-      const sum = habitLogsForHabit.reduce((acc, habitLog) => Number(habitLog.value) + acc, 0)
-      summary.push(`[${habit.name}] Total: ${sum}, Avg: ${(sum / 7).toFixed(1)}`)
-    } else if (habit.dataType === HabitDataType.TIME) {
-      const avg = averageTime(habitLogsForHabit.map(habitLog => habitLog.value))
-      summary.push(`[${habit.name}] Avg: ${avg}`)
-    } else {
-      throw new Error(`Invalid data type detected for habit ${habit.name}`)
-    }
-  }
+  //   if (habit.dataType === HabitDataType.BOOL) {
+  //     const count = habitLogsForHabit.reduce(
+  //       (acc, habitLog) => +(habitLog.value === 'yes') + acc,
+  //       0
+  //     )
+  //     summary.push(`[${habit.name}] Total: ${count} / 7`)
+  //   } else if (habit.dataType === HabitDataType.NUMBER) {
+  //     const sum = habitLogsForHabit.reduce((acc, habitLog) => Number(habitLog.value) + acc, 0)
+  //     summary.push(`[${habit.name}] Total: ${sum}, Avg: ${(sum / 7).toFixed(1)}`)
+  //   } else if (habit.dataType === HabitDataType.TIME) {
+  //     const avg = averageTime(habitLogsForHabit.map(habitLog => habitLog.value))
+  //     summary.push(`[${habit.name}] Avg: ${avg}`)
+  //   } else {
+  //     throw new Error(`Invalid data type detected for habit ${habit.name}`)
+  //   }
+  // }
 
   return ctx.reply(`Here's your habit summary for the last 7 days:\n\n${summary.join('\n')}`)
 }

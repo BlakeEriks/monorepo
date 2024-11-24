@@ -1,7 +1,7 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
-import quippetBot from '../../../lib/telegram/quippetBot'
+import quippetBot from '@/lib/telegram/bots/quippetBot'
+import type { NextApiRequest, NextApiResponse } from 'next'
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (req.method !== 'POST') {
       return res.status(405).json({ message: 'This endpoint only accepts POST requests' })
