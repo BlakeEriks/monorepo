@@ -3,7 +3,6 @@ import type { HabitCommand, HabitContext } from '../../types'
 
 import { enterScene } from '@/lib/util/telegraf'
 import logHabitScene from './logHabit'
-import logHabitsScene from './logHabits'
 import { NEW_HABIT_SCENE, newHabitScene } from './newHabit'
 import removeHabitScene, { REMOVE_HABIT_SCENE } from './removeHabit'
 import setDatabaseIdScene, { SET_DATABASE_ID_SCENE } from './setDatabaseId'
@@ -14,7 +13,6 @@ export const HABIT_SCENES: BaseScene<HabitContext>[] = [
   newHabitScene,
   removeHabitScene,
   logHabitScene,
-  logHabitsScene,
 ]
 
 export const HABIT_COMMANDS: HabitCommand[] = [
