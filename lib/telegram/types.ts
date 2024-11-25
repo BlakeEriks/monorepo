@@ -1,4 +1,4 @@
-import type { Habit, Prisma, Quote, Reminder, User } from '@prisma/client'
+import type { Quote, User } from '@prisma/client'
 import type { Context, Scenes } from 'telegraf'
 import { HabitProperty, NotionHabitDatabase } from '../util/notion/NotionHabitDatabase'
 
@@ -8,10 +8,11 @@ import { HabitProperty, NotionHabitDatabase } from '../util/notion/NotionHabitDa
 // }>
 
 interface HabitSession extends Scenes.SceneSession {
-  expecting: keyof Habit | keyof Reminder
-  habit: HabitProperty
-  currentHabit: number
-  habitLogs: Prisma.HabitLogCreateManyInput[]
+  // expecting: keyof Habit | keyof Reminder
+  habit?: HabitProperty
+  recentValues: Record<string, string[]>
+  // currentHabit: number
+  // habitLogs: Prisma.HabitLogCreateManyInput[]
 }
 
 export interface HabitContext extends Context {

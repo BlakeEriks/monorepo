@@ -61,6 +61,9 @@ habitBot.use(
   session({
     getSessionKey: ({ chat }) => chat?.id.toString() ?? '',
     store: new PostgresSessionStore(),
+    defaultSession: ctx => ({
+      recentValues: {},
+    }),
   })
 )
 habitBot.use(attachUser)

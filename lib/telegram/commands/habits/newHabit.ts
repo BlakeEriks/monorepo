@@ -31,7 +31,7 @@ enum NEW_HABIT_FIELDS {
 }
 export const newHabitScene = new Scenes.BaseScene<HabitContext>(NEW_HABIT_SCENE)
 newHabitScene.enter(ctx => {
-  ctx.session.expecting = NEW_HABIT_FIELDS.NAME
+  // ctx.session.expecting = NEW_HABIT_FIELDS.NAME
   // ctx.session.habit = {}
   return ctx.reply(`What is the name of the habit you would like to track?\n\nOr go /back`)
 })
