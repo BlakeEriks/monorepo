@@ -101,6 +101,7 @@ export class NotionHabitDatabase {
         }
         return numValue
       case 'date':
+        console.log('date value', value)
         if (isNaN(Date.parse(value))) {
           throw new Error('Date must be valid date string')
         }

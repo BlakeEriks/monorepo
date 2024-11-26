@@ -1,4 +1,13 @@
 import axios from 'axios'
+import * as dotenv from 'dotenv'
+
+// Set default environment to `prod` if no `--env` flag is provided
+const env = process.argv.includes('--env')
+  ? process.argv[process.argv.indexOf('--env') + 1]
+  : 'prod'
+
+// Load the environment variables from the chosen .env file
+dotenv.config({ path: `.env.${env}` })
 
 const BOTS = ['habit', 'quippet']
 
@@ -43,11 +52,11 @@ if (!botToken) {
 if (command === 'get') {
   getWebhookInfo(botToken)
 } else if (command === 'set') {
-  const bot = process.argv[3]
-
   if (!process.env.WEBHOOK_SERVER_URL) {
     throw new Error('WEBHOOK_SERVER_URL is required')
   }
   const webhookUrl = formatBotURL(bot)
   setWebhook(botToken, webhookUrl)
+} else if (command === 'unset') {
+  setWebhook(botToken, '')
 }

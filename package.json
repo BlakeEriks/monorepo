@@ -10,8 +10,9 @@
     "lint": "next lint",
     "migrate:dev": "dotenv -e .env.dev npx prisma migrate dev",
     "migrate:prod": "dotenv -e .env.prod npx prisma migrate dev",
-    "telegram:set": "dotenv -e .env.prod tsx scripts/telegramWebhook.ts set",
-    "telegram:get": "dotenv -e .env.prod tsx scripts/telegramWebhook.ts get"
+    "telegram:set": "tsx scripts/telegramWebhook.ts set",
+    "telegram:unset": "tsx scripts/telegramWebhook.ts unset",
+    "telegram:get": "tsx scripts/telegramWebhook.ts get"
   },
   "nodemonConfig": {
     "ignore": [
