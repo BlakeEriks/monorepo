@@ -73,7 +73,14 @@ habitBot.use(stage.middleware())
 
 const allCommands = commandGroups.flatMap(({ commands }) => commands)
 for (const { name, action } of allCommands) {
-  habitBot.command(name, action)
+  habitBot.command(name, async ctx => {
+    try {
+      await action(ctx)
+    } catch (error) {
+      console.error(`Error handling command /${name}:`, error)
+      ctx.reply("Sorry, I couldn't process your request. Please try again later.")
+    }
+  })
 }
 
 const getHabitKeyboard = (habits: HabitProperty[]) => {
