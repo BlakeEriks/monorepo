@@ -89,18 +89,23 @@ const getHabitKeyboard = (habits: HabitProperty[]) => {
 
 // Default
 habitBot.on(message('text'), async ctx => {
-  if (ctx.habitDatabase) {
-    const habit = await ctx.habitDatabase.getHabitByEmoji(ctx.message.text)
-    if (habit) {
-      ctx.session.habit = habit
-      return enterScene(LOG_HABIT_SCENE)(ctx)
+  try {
+    if (ctx.habitDatabase) {
+      const habit = await ctx.habitDatabase.getHabitByEmoji(ctx.message.text)
+      if (habit) {
+        ctx.session.habit = habit
+        return enterScene(LOG_HABIT_SCENE)(ctx)
+      }
     }
-  }
 
-  ctx.reply(
-    await getDefaultMessage(ctx),
-    getHabitKeyboard((await ctx.habitDatabase?.getHabits()) ?? [])
-  )
+    ctx.reply(
+      await getDefaultMessage(ctx),
+      getHabitKeyboard((await ctx.habitDatabase?.getHabits()) ?? [])
+    )
+  } catch (error) {
+    console.error('Error processing message:', error)
+    ctx.reply("Sorry, I couldn't process your message. Please try again later.")
+  }
 })
 
 export default habitBot
