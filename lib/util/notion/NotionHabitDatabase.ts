@@ -9,11 +9,11 @@ export enum NotionPropertyType {
 }
 
 export class HabitProperty {
-  readonly id: string
-  readonly name: string
-  readonly type: NotionPropertyType
-  readonly emoji: string
-  readonly text: string
+  id: string
+  name: string
+  type: NotionPropertyType
+  emoji: string
+  text: string
 
   constructor({ id, name, type }: GetDatabaseResponse['properties'][0]) {
     this.id = id
@@ -80,6 +80,43 @@ export class NotionHabitDatabase {
     )
 
     return this.upsertHabitLog(existingPage, habit.name, propertyPayload, nextPK)
+  }
+
+  async addNewHabit(text: string, emoji: string, type: NotionPropertyType) {
+    const database = await this.getDatabase()
+    const name = `${emoji} ${text}`
+
+    if (database.properties[name]) {
+      throw new Error(`Habit with name "${name}" already exists`)
+    }
+
+    const propertyTypes = {
+      [NotionPropertyType.CHECKBOX]: { checkbox: {} },
+      [NotionPropertyType.NUMBER]: { number: {} },
+      [NotionPropertyType.DATE]: { date: {} },
+    } as const
+
+    await this.notion.databases.update({
+      database_id: this.databaseId,
+      properties: {
+        [name]: propertyTypes[type],
+      },
+    })
+  }
+
+  async removeHabit(habitName: string) {
+    const database = await this.getDatabase()
+
+    if (!database.properties[habitName]) {
+      throw new Error(`Habit "${habitName}" does not exist`)
+    }
+
+    await this.notion.databases.update({
+      database_id: this.databaseId,
+      properties: {
+        [habitName]: null,
+      },
+    })
   }
 
   private async findHabitById(id: string) {

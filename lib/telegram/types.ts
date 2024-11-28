@@ -8,7 +8,7 @@ import { HabitProperty, NotionHabitDatabase } from '../util/notion/NotionHabitDa
 // }>
 
 interface HabitSession extends Scenes.SceneSession {
-  // expecting: keyof Habit | keyof Reminder
+  step: number
   habit?: HabitProperty
   recentValues: Record<string, string[]>
   // currentHabit: number
