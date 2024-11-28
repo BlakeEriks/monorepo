@@ -6,10 +6,8 @@ import attachUser from '@/lib/telegram/middlewares/attachUser'
 import saveMessage from '@/lib/telegram/middlewares/saveMessage'
 import type { HabitContext } from '@/lib/telegram/types'
 import { HabitProperty } from '@/lib/util/notion/NotionHabitDatabase'
-import { enterScene } from '@/lib/util/telegraf'
 import { Markup, Scenes, session, Telegraf } from 'telegraf'
 import { message } from 'telegraf/filters'
-import { LOG_HABIT_SCENE } from '../commands/habits/logHabit'
 import PostgresSessionStore from '../middlewares/session/sessionStore'
 
 const commandGroups = [
@@ -90,17 +88,17 @@ const getHabitKeyboard = (habits: HabitProperty[]) => {
 // Default
 habitBot.on(message('text'), async ctx => {
   try {
-    if (ctx.habitDatabase) {
-      const habit = await ctx.habitDatabase.getHabitByEmoji(ctx.message.text)
-      if (habit) {
-        ctx.session.habit = habit
-        return enterScene(LOG_HABIT_SCENE)(ctx)
-      }
-    }
+    // if (ctx.habitDatabase) {
+    //   const habit = await ctx.habitDatabase.getHabitByEmoji(ctx.message.text)
+    //   if (habit) {
+    //     ctx.session.habit = habit
+    //     return enterScene(LOG_HABIT_SCENE)(ctx)
+    //   }
+    // }
 
     ctx.reply(
-      await getDefaultMessage(ctx),
-      getHabitKeyboard((await ctx.habitDatabase?.getHabits()) ?? [])
+      await getDefaultMessage(ctx)
+      // getHabitKeyboard((await ctx.habitDatabase?.getHabits()) ?? [])
     )
   } catch (error) {
     console.error('Error processing message:', error)
