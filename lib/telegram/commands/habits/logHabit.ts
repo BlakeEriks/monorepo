@@ -8,6 +8,7 @@ export const LOG_HABIT_SCENE = 'LOG_HABIT_SCENE'
 const logHabitScene = new Scenes.BaseScene<HabitContext>(LOG_HABIT_SCENE)
 
 logHabitScene.enter(async ctx => {
+  /* If we have shortcut the habit selection, we go straight to recording */
   if (ctx.session.habit) {
     if (ctx.session.habit.type === NotionPropertyType.DATE) {
       return handleRecordHabit(ctx.session.habit, new Date().toISOString(), ctx)
