@@ -1,4 +1,4 @@
-import habitBot from './habitBot'
+import habitBot from './habitBot/habitBot'
 import quippetBot from './quippetBot'
 
 const bots = {

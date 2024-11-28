@@ -1,16 +1,16 @@
-import { HABIT_COMMANDS, HABIT_SCENES } from '@/lib/telegram/commands/habits'
+import { HABIT_COMMANDS, HABIT_SCENES } from '@/lib/telegram/bots/habitBot/commands'
 import { REMINDER_SCENES } from '@/lib/telegram/commands/reminders'
 import { TIMEZONE_SCENES } from '@/lib/telegram/commands/timezone'
 import attachHabits from '@/lib/telegram/middlewares/attachHabits'
 import attachUser from '@/lib/telegram/middlewares/attachUser'
 import saveMessage from '@/lib/telegram/middlewares/saveMessage'
 import type { HabitContext } from '@/lib/telegram/types'
-import { HabitProperty } from '@/lib/util/notion/NotionHabitDatabase'
 import { enterScene } from '@/lib/util/telegraf'
-import { Markup, Scenes, session, Telegraf } from 'telegraf'
+import { Scenes, session, Telegraf } from 'telegraf'
 import { message } from 'telegraf/filters'
-import { LOG_HABIT_SCENE } from '../commands/habits/logHabit'
-import PostgresSessionStore from '../middlewares/session/sessionStore'
+import PostgresSessionStore from '../../middlewares/session/sessionStore'
+import { LOG_HABIT_SCENE } from './commands/logHabit'
+import { getHabitKeyboard } from './habitBot.util'
 
 const commandGroups = [
   { name: 'Habit Commands', commands: HABIT_COMMANDS },
@@ -61,7 +61,7 @@ habitBot.use(
   session({
     getSessionKey: ({ chat }) => chat?.id.toString() ?? '',
     store: new PostgresSessionStore(),
-    defaultSession: ctx => ({
+    defaultSession: () => ({
       recentValues: {},
     }),
   })
@@ -70,42 +70,24 @@ habitBot.use(attachUser)
 habitBot.use(attachHabits)
 habitBot.use(saveMessage)
 habitBot.use(stage.middleware())
+habitBot.catch(async (error: any, ctx) => {
+  console.error('Error in habitBot:', error)
+  await ctx.reply(error.message)
+})
 
 const allCommands = commandGroups.flatMap(({ commands }) => commands)
-for (const { name, action } of allCommands) {
-  habitBot.command(name, async ctx => {
-    try {
-      await action(ctx)
-    } catch (error) {
-      console.error(`Error handling command /${name}:`, error)
-      ctx.reply("Sorry, I couldn't process your request. Please try again later.")
-    }
-  })
-}
-
-const getHabitKeyboard = (habits: HabitProperty[]) => {
-  return Markup.keyboard(habits.map(habit => habit.emoji)).resize()
-}
+for (const { name, action } of allCommands) habitBot.command(name, action)
 
 // Default
 habitBot.on(message('text'), async ctx => {
-  try {
-    if (ctx.habitDatabase) {
-      const habit = await ctx.habitDatabase.getHabitByEmoji(ctx.message.text)
-      if (habit) {
-        ctx.session.habit = habit
-        return enterScene(LOG_HABIT_SCENE)(ctx)
-      }
-    }
-
-    ctx.reply(
-      await getDefaultMessage(ctx),
-      getHabitKeyboard((await ctx.habitDatabase?.getHabits()) ?? [])
-    )
-  } catch (error) {
-    console.error('Error processing message:', error)
-    ctx.reply("Sorry, I couldn't process your message. Please try again later.")
+  /* Habit logging shortcut */
+  const habit = await ctx.habitDatabase?.getHabitByEmoji(ctx.message.text)
+  if (habit) {
+    ctx.session.habit = habit
+    return enterScene(LOG_HABIT_SCENE)(ctx)
   }
+
+  ctx.reply(await getDefaultMessage(ctx), await getHabitKeyboard(ctx))
 })
 
 export default habitBot

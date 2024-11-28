@@ -1,5 +1,5 @@
 import type { BaseScene } from 'telegraf/scenes'
-import type { HabitCommand, HabitContext } from '../../types'
+import type { HabitCommand, HabitContext } from '../../../types'
 
 import { enterScene } from '@/lib/util/telegraf'
 import logHabitScene from './logHabit'

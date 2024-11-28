@@ -2,7 +2,8 @@ import { HabitProperty, NotionPropertyType } from '@/lib/util/notion/NotionHabit
 import { replyAndLeave } from '@/lib/util/telegraf'
 import { Markup, Scenes } from 'telegraf'
 import { message } from 'telegraf/filters'
-import { type HabitContext } from '../../types'
+import { type HabitContext } from '../../../types'
+import { getHabitKeyboard } from '../habitBot.util'
 
 export const LOG_HABIT_SCENE = 'LOG_HABIT_SCENE'
 const logHabitScene = new Scenes.BaseScene<HabitContext>(LOG_HABIT_SCENE)
@@ -28,12 +29,7 @@ logHabitScene.enter(async ctx => {
     return replyAndLeave('You have no habits to log. Create a habit first with /new_habit')(ctx)
   }
 
-  return ctx.reply(
-    'Push the emoji of the habit you want to log:',
-    Markup.keyboard(habits.map(habit => habit.emoji))
-      .oneTime()
-      .resize()
-  )
+  return ctx.reply('Push the emoji of the habit you want to log:', await getHabitKeyboard(ctx))
 })
 
 logHabitScene.command('back', replyAndLeave('Cancelled habit logging.'))
@@ -55,7 +51,13 @@ const handleHabitSelection = async (emoji: string, ctx: HabitContext) => {
   }
   ctx.session.habit = habit
 
-  return ctx.reply(`Please provide data for the habit: ${habit.name}`)
+  // Return a keyboard with the recent values for that habit
+  const recentValues = ctx.session.recentValues[habit.emoji] ?? []
+  const keyboard = Markup.keyboard(recentValues.map(value => value.toString()))
+    .oneTime()
+    .resize()
+
+  return ctx.reply(`Please provide data for the habit: ${habit.name}`, keyboard)
 }
 
 const handleRecordHabit = async (habit: HabitProperty, value: string, ctx: HabitContext) => {
@@ -63,9 +65,9 @@ const handleRecordHabit = async (habit: HabitProperty, value: string, ctx: Habit
   ctx.session.habit = undefined
   ctx.session.recentValues[habit.emoji] = [
     value,
-    ...(ctx.session.recentValues[habit.emoji] ?? []),
+    ...(ctx.session.recentValues[habit.emoji] ?? []).filter(v => v !== value),
   ].slice(0, 3)
-  return replyAndLeave(`${habit.name} Saved!`)(ctx)
+  return replyAndLeave(`${habit.name} Saved!`, await getHabitKeyboard(ctx))(ctx)
 }
 
 export default logHabitScene

@@ -1,5 +1,5 @@
 import { getHabitLogsSince } from '@/lib/db/habits'
-import type { HabitContext } from '../../types'
+import type { HabitContext } from '../../../types'
 // import { HabitDataType } from '../../types'
 
 const habitSummary = async (ctx: HabitContext) => {

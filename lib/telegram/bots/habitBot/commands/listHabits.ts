@@ -1,4 +1,4 @@
-import type { HabitContext } from '../../types'
+import type { HabitContext } from '../../../types'
 
 const listHabits = async (ctx: HabitContext) => {
   if (!ctx.habitDatabase) {

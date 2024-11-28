@@ -2,7 +2,7 @@ import { updateUser } from '@/lib/db/user'
 import { replyAndLeave } from '@/lib/util/telegraf'
 import { Scenes } from 'telegraf'
 import { message } from 'telegraf/filters'
-import type { HabitContext } from '../../types'
+import type { HabitContext } from '../../../types'
 
 // Timezone Scene
 export const SET_DATABASE_ID_SCENE = 'SET_DATABASE_ID_SCENE'
