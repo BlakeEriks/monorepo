@@ -60,6 +60,7 @@ const handleHabitSelection = async (emoji: string, ctx: HabitContext) => {
 
 const handleRecordHabit = async (habit: HabitProperty, value: string, ctx: HabitContext) => {
   await ctx.habitDatabase.logHabit(habit.id, value)
+  ctx.session.habit = undefined
   ctx.session.recentValues[habit.emoji] = [
     value,
     ...(ctx.session.recentValues[habit.emoji] ?? []),
