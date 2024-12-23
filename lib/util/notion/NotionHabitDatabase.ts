@@ -2,46 +2,63 @@
 import { Client } from '@notionhq/client'
 import { GetDatabaseResponse, PageObjectResponse } from '@notionhq/client/build/src/api-endpoints'
 
+/** Enum representing the types of properties a habit can have in Notion. */
 export enum NotionPropertyType {
   CHECKBOX = 'checkbox',
   NUMBER = 'number',
   DATE = 'date',
 }
 
+/** Represents a habit property in the Notion database. */
 export class HabitProperty {
   id: string
   name: string
   type: NotionPropertyType
   emoji: string
   text: string
+  reminders: number[]
 
+  /**
+   * Constructs a HabitProperty instance.
+   *
+   * Property is of the format: "[emoji] [text]@[reminder1],[reminder2],[reminder3]"
+   * */
   constructor({ id, name, type }: GetDatabaseResponse['properties'][0]) {
     this.id = id
     this.name = name
     this.type = type as NotionPropertyType
     const [emoji, ...nameParts] = name.split(' ')
     this.emoji = emoji
-    this.text = nameParts.join(' ')
+
+    const fullText = nameParts.join(' ')
+    const [textPart, remindersPart] = fullText.split('@')
+    this.text = textPart
+    this.reminders = remindersPart ? remindersPart.split(',').map(Number) : []
   }
 }
 
+/** Manages interactions with a Notion database for habit tracking. */
 export class NotionHabitDatabase {
   private notion: Client
   private databaseId: string
   private database: GetDatabaseResponse | null = null
+  private todayPage: PageObjectResponse | null = null
   private nonHabitProperties: readonly string[] = ['Date', 'Index']
 
+  /** Constructs a NotionHabitDatabase instance. */
   constructor(notionApiKey: string, databaseId: string) {
     this.notion = new Client({ auth: notionApiKey })
     this.databaseId = databaseId
   }
 
+  /** Retrieves the Notion database. */
   async getDatabase() {
     return (this.database ??= await this.notion.databases.retrieve({
       database_id: this.databaseId,
     }))
   }
 
+  /** Retrieves all habit properties from the database. */
   async getHabits() {
     const database = await this.getDatabase()
     return Object.values(database.properties)
@@ -49,14 +66,27 @@ export class NotionHabitDatabase {
       .map(property => new HabitProperty(property))
   }
 
+  /** Finds a habit by its emoji. */
   async getHabitByEmoji(emoji: string) {
     return (await this.getHabits()).find(habit => habit.emoji === emoji)
   }
 
+  /** Finds a habit by its id. */
+  async getHabitById(id: string) {
+    return (await this.getHabits()).find(habit => habit.id === id)
+  }
+
+  /** Finds a habit by its name. */
+  async getHabitByName(name: string) {
+    return (await this.getHabits()).find(habit => habit.name === name)
+  }
+
+  /** Returns a formatted string of all habit names. */
   async prettyPrintHabits() {
     return (await this.getHabits()).map(({ name }) => name).join('\n')
   }
 
+  /** Retrieves recent pages from the database. */
   async getRecentPages(limit = 10) {
     const response = await this.notion.databases.query({
       database_id: this.databaseId,
@@ -66,13 +96,18 @@ export class NotionHabitDatabase {
     return response.results as PageObjectResponse[]
   }
 
+  /** Retrieves today's page from the database. */
+  async getTodayPage() {
+    return (this.todayPage ??= (await this.findTodayPage()).existingPage)
+  }
+
+  /** Logs a habit with a given value. */
   async logHabit(habitId: string, value: string) {
     const habit = await this.findHabitById(habitId)
     if (!habit) throw new Error(`Habit with id ${habitId} not found`)
 
     const validatedValue = this.validateHabitValue(value, habit.type)
-    const latestPages = await this.getRecentPages(1)
-    const { existingPage, nextPK } = this.findTodayPage(latestPages)
+    const { existingPage, nextPK } = await this.findTodayPage()
     const propertyPayload = this.createPropertyPayload(
       habit.type,
       validatedValue,
@@ -82,6 +117,7 @@ export class NotionHabitDatabase {
     return this.upsertHabitLog(existingPage, habit.name, propertyPayload, nextPK)
   }
 
+  /** Adds a new habit to the database. */
   async addNewHabit(text: string, emoji: string, type: NotionPropertyType) {
     const database = await this.getDatabase()
     const name = `${emoji} ${text}`
@@ -104,6 +140,7 @@ export class NotionHabitDatabase {
     })
   }
 
+  /** Removes a habit from the database. */
   async removeHabit(habitName: string) {
     const database = await this.getDatabase()
 
@@ -119,10 +156,12 @@ export class NotionHabitDatabase {
     })
   }
 
+  /** Finds a habit by its ID. */
   private async findHabitById(id: string) {
     return Object.values(await this.getHabits()).find(prop => prop.id === id)
   }
 
+  /** Validates the value of a habit based on its type. */
   private validateHabitValue(value: string, type: NotionPropertyType) {
     switch (type) {
       case 'checkbox':
@@ -138,7 +177,6 @@ export class NotionHabitDatabase {
         }
         return numValue
       case 'date':
-        console.log('date value', value)
         if (isNaN(Date.parse(value))) {
           throw new Error('Date must be valid date string')
         }
@@ -148,10 +186,13 @@ export class NotionHabitDatabase {
     }
   }
 
-  private findTodayPage(pages: PageObjectResponse[]) {
-    if (!pages.length) return { existingPage: null, nextPK: 1 }
+  /** Finds today's page from a list of pages. */
+  private async findTodayPage() {
+    const latestPages = await this.getRecentPages(1)
 
-    const [latestPage] = pages
+    if (!latestPages.length) return { existingPage: null, nextPK: 1 }
+
+    const [latestPage] = latestPages
     const dateProperty = latestPage.properties.Date as { date: { start: string } }
     const PK = (latestPage.properties.Index as { title: Array<{ text: { content: string } }> })
       .title[0].text.content
@@ -164,6 +205,7 @@ export class NotionHabitDatabase {
     }
   }
 
+  /** Creates a property payload for a habit. */
   private createPropertyPayload(type: NotionPropertyType, value: any, previousValue?: any) {
     switch (type) {
       case NotionPropertyType.CHECKBOX:
@@ -178,6 +220,7 @@ export class NotionHabitDatabase {
     }
   }
 
+  /** Upserts a habit log into the database. */
   private async upsertHabitLog(
     existingPage: PageObjectResponse | null,
     habitKey: string,
@@ -201,10 +244,12 @@ export class NotionHabitDatabase {
     })
   }
 
+  /** Gets the local date in ISO format. */
   private getLocalDate(date: Date) {
     return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().split('T')[0]
   }
 
+  /** Checks if two dates are the same local date. */
   private isSameLocalDate(dateOne: Date, dateTwo: Date) {
     return dateOne.toISOString().split('T')[0] === this.getLocalDate(dateTwo)
   }

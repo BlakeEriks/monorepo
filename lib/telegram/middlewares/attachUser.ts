@@ -6,9 +6,15 @@ const prisma = new PrismaClient()
 
 // Middleware to attach user to request
 const attachUser: MiddlewareFn<HabitContext | QuippetContext> = async (ctx, next) => {
-  if (!ctx.message) return await next()
+  console.log('attachUser', ctx.message)
+  const from = ctx.message?.from || ctx.callbackQuery?.from
 
-  const { id, first_name: name } = ctx.message.from
+  if (!from) {
+    console.log('ERROR: No `from`, skipping attachUser')
+    return await next()
+  }
+
+  const { id, first_name: name } = from
   const telegramId = String(id)
 
   try {
