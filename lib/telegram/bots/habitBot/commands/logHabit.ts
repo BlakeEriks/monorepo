@@ -4,6 +4,7 @@ import { Markup, Scenes } from 'telegraf'
 import { message } from 'telegraf/filters'
 import { type HabitContext } from '../../../types'
 import { getHabitKeyboard } from '../habitBot.util'
+import backCommand from './back'
 
 export const LOG_HABIT_SCENE = 'LOG_HABIT_SCENE'
 const logHabitScene = new Scenes.BaseScene<HabitContext>(LOG_HABIT_SCENE)
@@ -32,7 +33,7 @@ logHabitScene.enter(async ctx => {
   return ctx.reply('Push the emoji of the habit you want to log:', await getHabitKeyboard(ctx))
 })
 
-logHabitScene.command('back', replyAndLeave('Cancelled habit logging.'))
+logHabitScene.command('back', backCommand('Cancelled habit logging.'))
 
 logHabitScene.on(message('text'), async ctx => {
   if (ctx.session.habit) {
@@ -57,7 +58,7 @@ const handleHabitSelection = async (emoji: string, ctx: HabitContext) => {
     .oneTime()
     .resize()
 
-  return ctx.reply(`Please provide data for the habit: ${habit.name}`, keyboard)
+  return ctx.reply(`Please provide data for the habit: ${habit.name}\n\nOr go /back`, keyboard)
 }
 
 const handleRecordHabit = async (habit: HabitProperty, value: string, ctx: HabitContext) => {

@@ -12,9 +12,18 @@ export enum NotionPropertyType {
 /** Represents a habit property in the Notion database. */
 export class HabitProperty {
   id: string
+
+  /** Full name of the habit */
+  fullName: string
+
+  /** Emoji and text of the habit */
   name: string
   type: NotionPropertyType
+
+  /** Emoji of the habit */
   emoji: string
+
+  /** Text of the habit */
   text: string
   reminders: number[]
 
@@ -25,15 +34,16 @@ export class HabitProperty {
    * */
   constructor({ id, name, type }: GetDatabaseResponse['properties'][0]) {
     this.id = id
-    this.name = name
     this.type = type as NotionPropertyType
-    const [emoji, ...nameParts] = name.split(' ')
-    this.emoji = emoji
+    this.fullName = name
 
-    const fullText = nameParts.join(' ')
-    const [textPart, remindersPart] = fullText.split('@')
-    this.text = textPart
+    const [namePart, remindersPart] = name.split('@')
+    this.name = namePart
     this.reminders = remindersPart ? remindersPart.split(',').map(Number) : []
+
+    const [emoji, ...nameParts] = namePart.split(' ')
+    this.text = nameParts.join(' ')
+    this.emoji = emoji
   }
 }
 
@@ -43,7 +53,7 @@ export class NotionHabitDatabase {
   private databaseId: string
   private database: GetDatabaseResponse | null = null
   private todayPage: PageObjectResponse | null = null
-  private nonHabitProperties: readonly string[] = ['Date', 'Index']
+  private NON_HABIT_PROPERTIES: readonly string[] = ['Date', 'Index']
 
   /** Constructs a NotionHabitDatabase instance. */
   constructor(notionApiKey: string, databaseId: string) {
@@ -62,7 +72,7 @@ export class NotionHabitDatabase {
   async getHabits() {
     const database = await this.getDatabase()
     return Object.values(database.properties)
-      .filter(({ name }) => !this.nonHabitProperties.includes(name))
+      .filter(({ name }) => !this.NON_HABIT_PROPERTIES.includes(name))
       .map(property => new HabitProperty(property))
   }
 
@@ -252,5 +262,42 @@ export class NotionHabitDatabase {
   /** Checks if two dates are the same local date. */
   private isSameLocalDate(dateOne: Date, dateTwo: Date) {
     return dateOne.toISOString().split('T')[0] === this.getLocalDate(dateTwo)
+  }
+
+  /** Adds a reminder time to a habit */
+  async addReminderToHabit(habitId: string, reminderHour: number) {
+    const habit = await this.getHabitById(habitId)
+
+    if (!habit) {
+      throw new Error(`Habit "${habitId}" does not exist`)
+    }
+
+    if (reminderHour < 0 || reminderHour > 23) {
+      throw new Error('Reminder hour must be between 0 and 23')
+    }
+
+    // If reminder already exists, don't add it again
+    if (habit.reminders.includes(reminderHour)) {
+      throw new Error(`Reminder for ${reminderHour}:00 already exists`)
+    }
+
+    // Add new reminder to the sorted list
+    const newReminders = [...habit.reminders, reminderHour].sort((a, b) => a - b)
+
+    // Construct new name with updated reminders
+    const newName = `${habit.emoji} ${habit.text}@${newReminders.join(',')}`
+
+    // Update the property in Notion
+    this.database = await this.notion.databases.update({
+      database_id: this.databaseId,
+      properties: {
+        [habit.fullName]: { name: newName },
+      },
+    })
+
+    // console.log('res', res)
+
+    // // Update the database cache to null so it will be refreshed on next get
+    // = res
   }
 }

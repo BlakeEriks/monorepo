@@ -1,4 +1,4 @@
-import { HabitProperty, NotionPropertyType } from '@/lib/util/notion/NotionHabitDatabase'
+import { NotionPropertyType } from '@/lib/util/notion/NotionHabitDatabase'
 import { Markup } from 'telegraf'
 import { HabitContext } from '../../types'
 
@@ -38,15 +38,13 @@ export const getDefaultReply = async (ctx: HabitContext) => {
 }
 
 export const getHabitsInlineKeyboard = async (ctx: HabitContext) => {
-  if (!ctx.habitDatabase) return
-
-  const habits = await ctx.habitDatabase.getHabits()
-  if (habits.length === 0) return
-
-  return Markup.inlineKeyboard(await getHabitKeyboardButtons(habits))
+  return Markup.inlineKeyboard(await getHabitKeyboardButtons(ctx))
 }
 
-export const getHabitKeyboardButtons = async (habits: HabitProperty[]) => {
+export const getHabitKeyboardButtons = async (ctx: HabitContext) => {
+  const habits = await ctx.habitDatabase?.getHabits()
+  if (!habits) throw new Error('No habits')
+
   // Create compact buttons, multiple habits per row
   const flatButtons = habits.flatMap(({ emoji, id }) => [
     Markup.button.callback(emoji, `habit_detail_${id}`),
@@ -94,7 +92,21 @@ export const getTodayHabitsMarkdown = async (ctx: HabitContext) => {
   return `\`\`\`TODAY\n${habitLog}\`\`\`\n\n`
 }
 
-export const getHabitDetailButtons = async (habits: HabitProperty[]) => [
+export const getHabitDetailButtons = async (habitId: string) => [
   [Markup.button.callback('🔙', 'go_back')],
-  [Markup.button.callback('⊕ New Reminder', 'habit_new_reminder')],
+  [Markup.button.callback('⊕ New Reminder', `habit_new_reminder_${habitId}`)],
 ]
+
+export const getTimeSelectionKeyboard = (habitId: string) => {
+  const buttons = []
+  for (let i = 0; i < 24; i += 4) {
+    const row = []
+    for (let j = i; j < Math.min(i + 4, 24); j++) {
+      const hour = j.toString().padStart(2, '0')
+      row.push(Markup.button.callback(`${hour}:00`, `set_reminder_${habitId}_${hour}`))
+    }
+    buttons.push(row)
+  }
+  buttons.push([Markup.button.callback('🔙 Back', `habit_detail_${habitId}`)])
+  return buttons
+}

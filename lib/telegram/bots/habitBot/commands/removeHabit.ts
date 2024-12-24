@@ -3,6 +3,7 @@ import { replyAndLeave } from '@/lib/util/telegraf'
 import { Markup, Scenes } from 'telegraf'
 import { message } from 'telegraf/filters'
 import { getHabitKeyboard } from '../habitBot.util'
+import backCommand from './back'
 
 enum RemoveHabitState {
   SELECT_HABIT,
@@ -27,7 +28,7 @@ removeHabitScene.enter(async ctx => {
   return ctx.reply('Select a habit to remove:\n\nOr go /back', await getHabitKeyboard(ctx))
 })
 
-removeHabitScene.command('back', replyAndLeave('Cancelled habit removal.'))
+removeHabitScene.command('back', backCommand('Cancelled habit removal.'))
 
 removeHabitScene.on(message('text'), async ctx => {
   const habits = await ctx.habitDatabase.getHabits()

@@ -6,8 +6,9 @@ import attachUser from '@/lib/telegram/middlewares/attachUser'
 import saveMessage from '@/lib/telegram/middlewares/saveMessage'
 import type { HabitContext } from '@/lib/telegram/types'
 import { enterScene } from '@/lib/util/telegraf'
-import { Scenes, Telegraf } from 'telegraf'
+import { MiddlewareFn, NarrowedContext, Scenes, Telegraf } from 'telegraf'
 import { message } from 'telegraf/filters'
+import { Update } from 'telegraf/types'
 import sessionMiddleware from '../../middlewares/session'
 import { LOG_HABIT_SCENE } from './commands/logHabit'
 import {
@@ -16,6 +17,7 @@ import {
   getHabitDetailButtons,
   getHabitKeyboard,
   getHabitKeyboardButtons,
+  getTimeSelectionKeyboard,
   getTodayHabitsMarkdown,
 } from './habitBot.util'
 
@@ -40,36 +42,65 @@ export const commandGroups = [{ name: 'Habit Commands', commands: HABIT_COMMANDS
 const allCommands = commandGroups.flatMap(({ commands }) => commands)
 for (const { name, action } of allCommands) habitBot.command(name, action)
 
-// habitBot.action(/.*/, attachUser, attachHabits)
-habitBot.action(/^habit_detail_(.+)$/, async ctx => {
-  const habitId = ctx.match[1]
-  const habits = await ctx.habitDatabase?.getHabits()
-  const habit = await ctx.habitDatabase?.getHabitById(habitId)
+type ActionMiddleware = MiddlewareFn<
+  NarrowedContext<HabitContext, Update.CallbackQueryUpdate> & {
+    match: RegExpExecArray
+  }
+>
 
-  if (!habit) return ctx.reply('Error: Habit not found')
-  if (!ctx.callbackQuery.message || !('text' in ctx.callbackQuery.message))
-    return ctx.reply('Error: No message')
+const applyHabit: ActionMiddleware = async (ctx, next) => {
+  const habitId = ctx.match[1]
+  if (!habitId) throw new Error('No habit ID')
+
+  const habit = await ctx.habitDatabase?.getHabitById(habitId)
+  if (!habit) throw new Error('Habit not found')
+
+  ctx.session.habit = habit
+  return next()
+}
+
+const showHabitDetail = async (ctx: HabitContext) => {
+  if (!ctx.session.habit) return ctx.reply('Error: Habit not found')
+
+  const { name, reminders, id } = ctx.session.habit
 
   return ctx.editMessageText(
-    `${await getTodayHabitsMarkdown(ctx)}${habit.name}:
-    Reminders: ${habit.reminders.join(', ')}`,
+    `${await getTodayHabitsMarkdown(ctx)}${name}: Reminders: ${reminders.join(', ')}`,
     {
       parse_mode: 'MarkdownV2',
       reply_markup: {
-        inline_keyboard: await getHabitDetailButtons(habits),
+        inline_keyboard: await getHabitDetailButtons(id),
       },
     }
   )
+}
+
+habitBot.action(/^habit_detail_(.+)$/, applyHabit, showHabitDetail)
+
+habitBot.action(/^habit_new_reminder_(.+)$/, applyHabit, async ctx => {
+  return ctx.editMessageText('Select reminder time:', {
+    reply_markup: {
+      inline_keyboard: getTimeSelectionKeyboard(ctx.session.habit!.id),
+    },
+  })
+})
+
+// Add new action for handling time selection
+habitBot.action(/^set_reminder_(.+)_(\d+)$/, applyHabit, async ctx => {
+  const hour = parseInt(ctx.match[2])
+  const { id } = ctx.session.habit!
+  await ctx.habitDatabase?.addReminderToHabit(id, hour)
+
+  // Update the habit in the session
+  ctx.session.habit = await ctx.habitDatabase?.getHabitById(id)
+  return showHabitDetail(ctx)
 })
 
 habitBot.action('go_back', async ctx => {
-  const habits = await ctx.habitDatabase?.getHabits()
-  if (!habits) return ctx.reply('Error: No habits')
-
   return ctx.editMessageText(`${await getTodayHabitsMarkdown(ctx)}`, {
     parse_mode: 'MarkdownV2',
     reply_markup: {
-      inline_keyboard: await getHabitKeyboardButtons(habits),
+      inline_keyboard: await getHabitKeyboardButtons(ctx),
     },
   })
 })
