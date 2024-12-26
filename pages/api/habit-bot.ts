@@ -1,5 +1,5 @@
 import habitBot from '@/lib/telegram/bots/habitBot/habitBot'
-import { NextApiRequest, NextApiResponse } from 'next'
+import type { NextApiRequest, NextApiResponse } from 'next'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
