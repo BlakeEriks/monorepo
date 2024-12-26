@@ -121,10 +121,10 @@ export class NotionHabitDatabase {
     const propertyPayload = this.createPropertyPayload(
       habit.type,
       validatedValue,
-      existingPage?.properties[habit.name]
+      existingPage?.properties[habit.fullName]
     )
 
-    return this.upsertHabitLog(existingPage, habit.name, propertyPayload, nextPK)
+    return this.upsertHabitLog(existingPage, habit.fullName, propertyPayload, nextPK)
   }
 
   /** Adds a new habit to the database. */
