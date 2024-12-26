@@ -56,11 +56,22 @@ export const toggleFavorite = async (userId: number, quoteId: number) => {
 
 export const getQuoteById = (quoteId: number) => prisma.quote.findUnique({ where: { id: quoteId } })
 
-export const sampleQuotesByUser = (userId: number, count: number) =>
-  prisma.quote.findMany({
+export const sampleQuotesByUser = async (userId: number, count: number) => {
+  const totalQuotes = await prisma.quote.count({
+    where: {
+      userId,
+      deleted: false,
+    },
+  })
+
+  const skip = Math.floor(Math.random() * Math.max(totalQuotes - count, 0))
+
+  return prisma.quote.findMany({
     where: {
       userId,
       deleted: false,
     },
     take: count,
+    skip: skip,
   })
+}
