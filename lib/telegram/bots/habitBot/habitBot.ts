@@ -11,6 +11,8 @@ import { message } from 'telegraf/filters'
 import { Update } from 'telegraf/types'
 import sessionMiddleware from '../../middlewares/session'
 import { LOG_HABIT_SCENE } from './commands/logHabit'
+import { NEW_HABIT_SCENE } from './commands/newHabit'
+import { REMOVE_HABIT_SCENE } from './commands/removeHabit'
 import {
   DEFAULT_MESSAGE,
   getDefaultReply,
@@ -103,6 +105,14 @@ habitBot.action('go_back', async ctx => {
       inline_keyboard: await getHabitKeyboardButtons(ctx),
     },
   })
+})
+
+habitBot.action('new_habit', async ctx => {
+  return enterScene(NEW_HABIT_SCENE)(ctx)
+})
+
+habitBot.action(/^habit_delete_(.+)$/, applyHabit, async ctx => {
+  await ctx.scene.enter(REMOVE_HABIT_SCENE)
 })
 
 // Default

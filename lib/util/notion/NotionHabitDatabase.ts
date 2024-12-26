@@ -142,7 +142,7 @@ export class NotionHabitDatabase {
       [NotionPropertyType.DATE]: { date: {} },
     } as const
 
-    await this.notion.databases.update({
+    this.database = await this.notion.databases.update({
       database_id: this.databaseId,
       properties: {
         [name]: propertyTypes[type],
@@ -151,17 +151,14 @@ export class NotionHabitDatabase {
   }
 
   /** Removes a habit from the database. */
-  async removeHabit(habitName: string) {
-    const database = await this.getDatabase()
+  async removeHabit(habitId: string) {
+    const habit = await this.findHabitById(habitId)
+    if (!habit) throw new Error(`Habit "${habitId}" does not exist`)
 
-    if (!database.properties[habitName]) {
-      throw new Error(`Habit "${habitName}" does not exist`)
-    }
-
-    await this.notion.databases.update({
+    this.database = await this.notion.databases.update({
       database_id: this.databaseId,
       properties: {
-        [habitName]: null,
+        [habit.fullName]: null,
       },
     })
   }
@@ -294,10 +291,5 @@ export class NotionHabitDatabase {
         [habit.fullName]: { name: newName },
       },
     })
-
-    // console.log('res', res)
-
-    // // Update the database cache to null so it will be refreshed on next get
-    // = res
   }
 }

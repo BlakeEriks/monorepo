@@ -2,6 +2,11 @@ import { NotionPropertyType } from '@/lib/util/notion/NotionHabitDatabase'
 import { Markup } from 'telegraf'
 import { HabitContext } from '../../types'
 
+export enum BooleanOption {
+  YES = '✅ Yes',
+  NO = '❌ No',
+}
+
 export const getHabitKeyboard = async (ctx: HabitContext) => {
   const habits = await ctx.habitDatabase?.getHabits()
   if (!habits) return
@@ -55,7 +60,7 @@ export const getHabitKeyboardButtons = async (ctx: HabitContext) => {
   for (let i = 0; i < flatButtons.length; i += 8) {
     buttons.push(flatButtons.slice(i, i + 8))
   }
-  buttons.push([Markup.button.callback('➕ New Habit', 'details')])
+  buttons.push([Markup.button.callback('➕ New Habit', 'new_habit')])
 
   return buttons
 }
@@ -66,8 +71,8 @@ export const getTodayHabitsMarkdown = async (ctx: HabitContext) => {
   const habits = await ctx.habitDatabase?.getHabits()
 
   const habitLog = habits
-    .map(({ text, name, emoji }) => {
-      const property = todayProperties[name]
+    .map(({ text, fullName, emoji }) => {
+      const property = todayProperties[fullName]
       let status = '□\u200B Not done'
 
       if (property) {
@@ -93,8 +98,11 @@ export const getTodayHabitsMarkdown = async (ctx: HabitContext) => {
 }
 
 export const getHabitDetailButtons = async (habitId: string) => [
-  [Markup.button.callback('🔙', 'go_back')],
-  [Markup.button.callback('⊕ New Reminder', `habit_new_reminder_${habitId}`)],
+  [
+    Markup.button.callback('⬅️ Back', 'go_back'),
+    Markup.button.callback('❌ Delete', `habit_delete_${habitId}`),
+    Markup.button.callback('Add Reminder', `habit_new_reminder_${habitId}`),
+  ],
 ]
 
 export const getTimeSelectionKeyboard = (habitId: string) => {
@@ -109,4 +117,8 @@ export const getTimeSelectionKeyboard = (habitId: string) => {
   }
   buttons.push([Markup.button.callback('🔙 Back', `habit_detail_${habitId}`)])
   return buttons
+}
+
+export const getBooleanKeyboard = () => {
+  return Markup.keyboard([[BooleanOption.YES, BooleanOption.NO]])
 }

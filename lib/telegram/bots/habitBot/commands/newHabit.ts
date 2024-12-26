@@ -41,10 +41,16 @@ export const newHabitScene = new Scenes.BaseScene<HabitContext>(NEW_HABIT_SCENE)
 newHabitScene.enter(ctx => {
   ctx.session.step = NEW_HABIT_STEPS.NAME
   ctx.session.habit = {} as HabitProperty
-  return ctx.reply(`What is the name of the habit you would like to track?\n\nOr go /back`)
+  return ctx.replyWithMarkdownV2(
+    `━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n*What is the name of the habit you would like to track?*\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+    {
+      ...Markup.removeKeyboard(),
+      ...Markup.inlineKeyboard([Markup.button.callback('❌ Cancel', 'cancel')]),
+    }
+  )
 })
 
-newHabitScene.command('back', replyAndLeave('Cancelled habit creation.'))
+newHabitScene.action('cancel', ctx => replyAndLeave('Cancelled habit creation.')(ctx))
 
 newHabitScene.on(message('text'), async ctx => {
   if (!ctx.session.habit) throw new Error('No habit in session')
@@ -53,13 +59,23 @@ newHabitScene.on(message('text'), async ctx => {
     case NEW_HABIT_STEPS.NAME:
       ctx.session.habit!.name = ctx.message.text
       ctx.session.step = NEW_HABIT_STEPS.EMOJI
-      return ctx.reply('What emoji will represent this habit?')
+      return ctx.replyWithMarkdownV2(
+        `━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n*What emoji will represent this habit?*\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+        {
+          ...Markup.removeKeyboard(),
+          ...Markup.inlineKeyboard([Markup.button.callback('❌ Cancel', 'cancel')]),
+        }
+      )
     case NEW_HABIT_STEPS.EMOJI:
       if (!isEmoji(ctx.message.text)) return ctx.reply('Invalid emoji. Please try again.')
 
       ctx.session.habit.emoji = ctx.message.text
       ctx.session.step = NEW_HABIT_STEPS.TYPE
-      return ctx.reply('What type of data will this habit track?', getHabitDataTypeKeyboard())
+      await ctx.replyWithMarkdownV2(
+        `━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n*What type of data will this habit track?*\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+        getHabitDataTypeKeyboard()
+      )
+      return Markup.inlineKeyboard([Markup.button.callback('❌ Cancel', 'cancel')])
     case NEW_HABIT_STEPS.TYPE:
       ctx.session.habit.type = HABIT_DATA_TYPES.find(
         ({ emoji, name }) => emoji + ' ' + name === ctx.message.text

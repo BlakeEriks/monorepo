@@ -3,7 +3,7 @@ import { replyAndLeave } from '@/lib/util/telegraf'
 import { Markup, Scenes } from 'telegraf'
 import { message } from 'telegraf/filters'
 import { type HabitContext } from '../../../types'
-import { getHabitKeyboard } from '../habitBot.util'
+import { getDefaultReply, getHabitKeyboard } from '../habitBot.util'
 import backCommand from './back'
 
 export const LOG_HABIT_SCENE = 'LOG_HABIT_SCENE'
@@ -68,7 +68,8 @@ const handleRecordHabit = async (habit: HabitProperty, value: string, ctx: Habit
     value,
     ...(ctx.session.recentValues[habit.emoji] ?? []).filter(v => v !== value),
   ].slice(0, 3)
-  return replyAndLeave(`${habit.name} Saved!`, await getHabitKeyboard(ctx))(ctx)
+  await ctx.reply(`${habit.name} Saved!`, await getHabitKeyboard(ctx))
+  return getDefaultReply(ctx).then(() => ctx.scene.leave())
 }
 
 export default logHabitScene
