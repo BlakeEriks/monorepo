@@ -1,10 +1,28 @@
-export const escapeMarkdown = (text: string): string => {
-  // First escape backslashes themselves
-  let escaped = text.replace(/\\/g, '\\\\')
+const SPECIAL_CHARS = [
+  '\\',
+  '_',
+  '*',
+  '[',
+  ']',
+  '(',
+  ')',
+  '~',
+  '`',
+  '>',
+  '<',
+  '&',
+  '#',
+  '+',
+  '-',
+  '=',
+  '|',
+  '{',
+  '}',
+  '.',
+  '!',
+]
 
-  // Then escape special Markdown V2 characters
-  // Note: putting the dash at the end of the character class to avoid it being interpreted as a range
-  escaped = escaped.replace(/[_[\]()~`>#+=|{}.!]|-|–|—/g, '\\$&')
-
-  return escaped
+export const escapeMarkdown = (text: string) => {
+  SPECIAL_CHARS.forEach(char => (text = text.replaceAll(char, `\\${char}`)))
+  return text
 }

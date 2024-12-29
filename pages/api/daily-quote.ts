@@ -2,6 +2,7 @@ import { sampleQuotesByUser } from '@/lib/db/quippets'
 import { getAllUsers } from '@/lib/db/user'
 import quippetBot from '@/lib/telegram/bots/quippetBot'
 import { escapeMarkdown } from '@/lib/util/markdown'
+
 import { NextApiRequest, NextApiResponse } from 'next'
 
 const QUOTE_SAMPLE_SIZE = 3
@@ -15,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (!telegramId) continue
 
       const quotes = await sampleQuotesByUser(id, QUOTE_SAMPLE_SIZE)
-      const quotesMessage = quotes.map(formatQuote).join('\n\n---\n\n')
+      const quotesMessage = quotes.map(formatQuote).join('\n\n\n')
       await quippetBot.telegram.sendMessage(telegramId, quotesMessage, {
         parse_mode: 'MarkdownV2',
       })
@@ -30,6 +31,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 const formatQuote = (quote: Quote) => {
   let quoteContent = `> _"${escapeMarkdown(quote.content)}"_`
   if (quote.quotee) quoteContent += `\n>\n> \\- ${escapeMarkdown(quote.quotee)}`
-  console.log('content', quoteContent)
+  if (quote.book) quoteContent += `\n>\n>${escapeMarkdown(quote.book.title)}`
   return quoteContent
 }

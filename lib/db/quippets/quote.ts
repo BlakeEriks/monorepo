@@ -75,5 +75,8 @@ export const sampleQuotesByUser = async (userId: number, count: number) => {
     },
     take: count,
     skip: skip,
+    include: {
+      book: true,
+    },
   })
 }
