@@ -89,14 +89,17 @@ export const getTodayHabitsMarkdown = async (ctx: HabitContext) => {
     })
     .join('\n')
 
-  return `\`\`\`TODAY\n${habitLog}\`\`\`\n\n`
+  return `\`\`\`TODAY\n${habitLog}\`\`\``
 }
 
 export const getHabitDetailButtons = async (habitId: string) => [
   [
     Markup.button.callback('⬅️ Back', 'go_back'),
     Markup.button.callback('❌ Delete', `habit_delete_${habitId}`),
-    Markup.button.callback('Add Reminder', `habit_new_reminder_${habitId}`),
+  ],
+  [
+    Markup.button.callback('🟢 Add Reminder', `habit_new_reminder_${habitId}`),
+    Markup.button.callback('🔴 Clear Reminders', `habit_clear_reminders_${habitId}`),
   ],
 ]
 
@@ -106,11 +109,11 @@ export const getTimeSelectionKeyboard = (habitId: string) => {
     const row = []
     for (let j = i; j < Math.min(i + 4, 24); j++) {
       const hour = j.toString().padStart(2, '0')
-      row.push(Markup.button.callback(`${hour}:00`, `set_reminder_${habitId}_${hour}`))
+      row.push(Markup.button.callback(`${hour}:00`, `habit_set_reminder_${habitId}_${hour}`))
     }
     buttons.push(row)
   }
-  buttons.push([Markup.button.callback('🔙 Back', `habit_detail_${habitId}`)])
+  buttons.push([Markup.button.callback('⬅️ Back', `habit_detail_${habitId}`)])
   return buttons
 }
 
