@@ -64,17 +64,30 @@ const applyHabit: ActionMiddleware = async (ctx, next) => {
 const showHabitDetail = async (ctx: HabitContext) => {
   if (!ctx.session.habit) return ctx.reply('Error: Habit not found')
 
-  const { name, reminders, id } = ctx.session.habit
+  const { name, reminders, id, streak = 0, weeklyGoal = 7 } = ctx.session.habit as any
 
-  return ctx.editMessageText(
-    `${await getTodayHabitsMarkdown(ctx)}${name}: Reminders: ${reminders.join(', ')}`,
-    {
-      parse_mode: 'MarkdownV2',
-      reply_markup: {
-        inline_keyboard: await getHabitDetailButtons(id),
-      },
-    }
-  )
+  // Format reminders to show in 24h format
+  const reminderTimes = reminders.length
+    ? reminders.map((h: number) => `${h}:00`).join(', ')
+    : 'No reminders set'
+
+  const message = [
+    await getTodayHabitsMarkdown(ctx),
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    `*${name}*\n`,
+    `🎯 Goal: ${weeklyGoal} times per week`,
+    `⏰ Reminders: ${reminderTimes}`,
+    `🔥 Current streak: ${streak} days`,
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    // Add more stats here as needed
+  ].join('\n')
+
+  return ctx.editMessageText(message, {
+    parse_mode: 'MarkdownV2',
+    reply_markup: {
+      inline_keyboard: await getHabitDetailButtons(id),
+    },
+  })
 }
 
 habitBot.action(/^habit_detail_(.+)$/, applyHabit, showHabitDetail)
@@ -88,13 +101,28 @@ habitBot.action(/^habit_new_reminder_(.+)$/, applyHabit, async ctx => {
 })
 
 // Add new action for handling time selection
-habitBot.action(/^set_reminder_(.+)_(\d+)$/, applyHabit, async ctx => {
+habitBot.action(/^habit_set_reminder_(.+)_(\d+)$/, applyHabit, async ctx => {
   const hour = parseInt(ctx.match[2])
   const { id } = ctx.session.habit!
   await ctx.habitDatabase?.addReminderToHabit(id, hour)
 
   // Update the habit in the session
   ctx.session.habit = await ctx.habitDatabase?.getHabitById(id)
+  return showHabitDetail(ctx)
+})
+
+habitBot.action(/^habit_clear_reminders_(.+)$/, applyHabit, async ctx => {
+  const { id, reminders } = ctx.session.habit!
+  if (!reminders.length) {
+    return ctx.answerCbQuery('No reminders to clear')
+  }
+
+  await ctx.habitDatabase?.clearRemindersFromHabit(id)
+
+  // Update the habit in the session
+  ctx.session.habit = await ctx.habitDatabase?.getHabitById(id)
+  // Notification that reminders have been cleared
+  await ctx.answerCbQuery('Reminders cleared!')
   return showHabitDetail(ctx)
 })
 
