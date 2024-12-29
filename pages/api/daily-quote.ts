@@ -29,7 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 }
 
 const formatQuote = (quote: Quote) => {
-  let quoteContent = `> _"${escapeMarkdown(quote.content)}"_`
+  let quoteContent = `> _${escapeMarkdown(quote.content)}_`
   if (quote.quotee) quoteContent += `\n>\n> \\- ${escapeMarkdown(quote.quotee)}`
   if (quote.book) quoteContent += `\n>\n>${escapeMarkdown(quote.book.title)}`
   return quoteContent
