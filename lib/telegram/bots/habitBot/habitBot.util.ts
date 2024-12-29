@@ -23,11 +23,6 @@ export const getHabitKeyboard = async (ctx: HabitContext) => {
   return keyboard
 }
 
-// export const escapeMarkdown = (text: string): string => {
-//   // Escape special Markdown V2 characters, excluding asteris
-//   return text.replace(/[_[\]()~`>#+-=|{}.!]/g, '\\$&')
-// }
-
 export const DEFAULT_MESSAGE = `
 *🤖 Beep Boop\\!*
 

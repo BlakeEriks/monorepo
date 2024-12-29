@@ -66,6 +66,8 @@ export const sampleQuotesByUser = async (userId: number, count: number) => {
 
   const skip = Math.floor(Math.random() * Math.max(totalQuotes - count, 0))
 
+  console.log('Sampling quotes', userId, count, skip, totalQuotes)
+
   return prisma.quote.findMany({
     where: {
       userId,
