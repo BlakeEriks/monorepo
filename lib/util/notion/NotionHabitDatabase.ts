@@ -292,4 +292,15 @@ export class NotionHabitDatabase {
       },
     })
   }
+
+  /** Clears all reminders from a habit */
+  async clearRemindersFromHabit(habitId: string) {
+    const habit = await this.getHabitById(habitId)
+    if (!habit) throw new Error(`Habit "${habitId}" does not exist`)
+
+    this.database = await this.notion.databases.update({
+      database_id: this.databaseId,
+      properties: { [habit.fullName]: { name: habit.name } },
+    })
+  }
 }
