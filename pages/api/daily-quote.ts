@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const quotes = await sampleQuotesByUser(id, QUOTE_SAMPLE_SIZE)
       const quotesMessage = quotes.map(formatQuote).join('\n\n\n')
-      const header = `*Here are your quotes for today!*\n\n`
+      const header = `*Here are your quotes for today\\!*\n\n`
       await quippetBot.telegram.sendMessage(telegramId, `${header}${quotesMessage}`, {
         parse_mode: 'MarkdownV2',
       })
