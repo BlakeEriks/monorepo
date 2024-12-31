@@ -1,3 +1,4 @@
+import { updateUser } from '@/lib/db/user'
 import { HABIT_COMMANDS, HABIT_SCENES } from '@/lib/telegram/bots/habitBot/commands'
 import { REMINDER_SCENES } from '@/lib/telegram/commands/reminders'
 import { TIMEZONE_SCENES } from '@/lib/telegram/commands/timezone'
@@ -6,9 +7,10 @@ import attachUser from '@/lib/telegram/middlewares/attachUser'
 import saveMessage from '@/lib/telegram/middlewares/saveMessage'
 import type { HabitContext } from '@/lib/telegram/types'
 import { enterScene } from '@/lib/util/telegraf'
+import { find } from 'geo-tz'
 import { MiddlewareFn, NarrowedContext, Scenes, Telegraf } from 'telegraf'
 import { message } from 'telegraf/filters'
-import { Update } from 'telegraf/types'
+import { KeyboardButton, Update } from 'telegraf/types'
 import sessionMiddleware from '../../middlewares/session'
 import { LOG_HABIT_SCENE } from './commands/logHabit'
 import { NEW_HABIT_SCENE } from './commands/newHabit'
@@ -141,6 +143,40 @@ habitBot.action('new_habit', async ctx => {
 
 habitBot.action(/^habit_delete_(.+)$/, applyHabit, async ctx => {
   await ctx.scene.enter(REMOVE_HABIT_SCENE)
+})
+
+const getLocationRequestKeyboard = () => ({
+  reply_markup: {
+    one_time_keyboard: true,
+    keyboard: [
+      [
+        {
+          text: '📍 Share Location',
+          request_location: true,
+        } as KeyboardButton,
+      ],
+    ],
+    resize_keyboard: true,
+  },
+})
+
+habitBot.action('set_timezone', async ctx => {
+  await ctx.reply(
+    'Please share your location so I can set your timezone:',
+    getLocationRequestKeyboard()
+  )
+})
+
+habitBot.on(message('location'), async ctx => {
+  const { latitude, longitude } = ctx.message.location
+  const timezone = find(latitude, longitude)[0]
+
+  // Save timezone to user profile
+  await updateUser(ctx.user.id, { timezone })
+
+  await ctx.reply(`Great! I've set your timezone to: ${timezone}`, {
+    reply_markup: { remove_keyboard: true },
+  })
 })
 
 // Default
