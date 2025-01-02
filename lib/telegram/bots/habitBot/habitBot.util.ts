@@ -42,10 +42,9 @@ export const getHabitsInlineKeyboard = async (ctx: HabitContext) => {
 }
 
 export const getHabitKeyboardButtons = async (ctx: HabitContext) => {
-  const habits = await ctx.habitDatabase?.getHabits()
-  if (!habits) throw new Error('No habits')
+  const habits = (await ctx.habitDatabase?.getHabits()) ?? []
 
-  // Create compact buttons, multiple habits per row
+  // // Create compact buttons, multiple habits per row
   const flatButtons = habits.flatMap(({ emoji, id }) => [
     Markup.button.callback(emoji, `habit_detail_${id}`),
   ])
@@ -55,7 +54,10 @@ export const getHabitKeyboardButtons = async (ctx: HabitContext) => {
   for (let i = 0; i < flatButtons.length; i += 8) {
     buttons.push(flatButtons.slice(i, i + 8))
   }
-  buttons.push([Markup.button.callback('➕ New Habit', 'new_habit')])
+  buttons.push([
+    Markup.button.callback('➕ New Habit', 'new_habit'),
+    Markup.button.callback('📍 Timezone', 'set_timezone'),
+  ])
 
   return buttons
 }
@@ -64,10 +66,22 @@ export const getTodayHabitsMarkdown = async (ctx: HabitContext) => {
   const todayPage = await ctx.habitDatabase?.getTodayPage()
   const todayProperties = todayPage?.properties ?? {}
   const habits = await ctx.habitDatabase?.getHabits()
+  const { timezone } = ctx.user
+
+  const dateHeader = new Date()
+    .toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      timeZone: timezone,
+    })
+    // Replace spaces with non-breaking space
+    .replace(/\s+/g, '\u00A0')
 
   const habitLog = habits
-    .map(({ text, fullName, emoji }) => {
+    .map(({ text, fullName, emoji, id }) => {
       const property = todayProperties[fullName]
+      const { recentValues, streak, lastRecorded } = ctx.session.habitMeta[id] ?? {}
       let status = '□\u200B Not done'
 
       if (property) {
@@ -84,12 +98,15 @@ export const getTodayHabitsMarkdown = async (ctx: HabitContext) => {
         }
       }
 
-      const paddedText = text.padEnd(20, ' ')
-      return `${emoji} ${paddedText}\t${status}`
+      const streakDisplay = streak > 0 ? ` 🔥${streak}` : ''
+      const paddedText = `${text} ${streakDisplay}`.padEnd(20, ' ')
+      const formatted = `${emoji} ${paddedText}\t${status}`
+
+      return formatted
     })
     .join('\n')
 
-  return `\`\`\`TODAY\n${habitLog}\`\`\``
+  return `\`\`\`${dateHeader}\n${habitLog}\`\`\``
 }
 
 export const getHabitDetailButtons = async (habitId: string) => [

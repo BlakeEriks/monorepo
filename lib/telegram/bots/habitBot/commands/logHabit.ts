@@ -63,11 +63,26 @@ const handleHabitSelection = async (emoji: string, ctx: HabitContext) => {
 
 const handleRecordHabit = async (habit: HabitProperty, value: string, ctx: HabitContext) => {
   await ctx.habitDatabase.logHabit(habit.id, value)
+  const { timezone } = ctx.user
+  const { streak = 0, lastRecorded } = ctx.session.habitMeta[habit.id] ?? {}
   ctx.session.habit = undefined
-  ctx.session.recentValues[habit.emoji] = [
-    value,
-    ...(ctx.session.recentValues[habit.emoji] ?? []).filter(v => v !== value),
-  ].slice(0, 3)
+
+  // Check if last recorded was yesterday, using user's timezone
+  const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-US', {
+    timeZone: timezone,
+  })
+  const wasYesterday =
+    lastRecorded &&
+    new Date(lastRecorded).toLocaleDateString('en-US', { timeZone: timezone }) === yesterday
+
+  ctx.session.habitMeta[habit.id] = {
+    recentValues: [
+      value,
+      ...(ctx.session.habitMeta[habit.id]?.recentValues ?? []).filter(v => v !== value),
+    ].slice(0, 3),
+    lastRecorded: new Date(),
+    streak: wasYesterday ? streak + 1 : streak,
+  }
   await ctx.reply(`${habit.name} Saved!`, await getHabitKeyboard(ctx))
   return getDefaultReply(ctx).then(() => ctx.scene.leave())
 }

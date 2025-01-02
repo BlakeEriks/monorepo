@@ -74,6 +74,7 @@ export class NotionHabitDatabase {
     return Object.values(database.properties)
       .filter(({ name }) => !this.NON_HABIT_PROPERTIES.includes(name))
       .map(property => new HabitProperty(property))
+      .reverse()
   }
 
   /** Finds a habit by its emoji. */

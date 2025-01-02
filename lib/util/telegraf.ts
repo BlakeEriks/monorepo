@@ -11,6 +11,7 @@ export const enterScene = (sceneName: string) => (ctx: ContextWithScene) =>
 
 export const replyAndLeave =
   (message: string, keyboard?: Markup.Markup<any>) => async (ctx: any) => {
+    ctx.session.step = 0
     await ctx.replyWithHTML(message, keyboard ?? (await getHabitKeyboard(ctx)))
     await getDefaultReply(ctx)
     await ctx.scene.leave()

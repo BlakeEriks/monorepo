@@ -11,8 +11,15 @@ interface HabitSession extends Scenes.SceneSession {
   step: number
   habit?: HabitProperty
   recentValues: Record<string, string[]>
+  habitMeta: Record<string, HabitMeta>
   // currentHabit: number
   // habitLogs: Prisma.HabitLogCreateManyInput[]
+}
+
+interface HabitMeta {
+  recentValues: string[]
+  lastRecorded: Date
+  streak: number
 }
 
 export interface HabitContext extends Context {

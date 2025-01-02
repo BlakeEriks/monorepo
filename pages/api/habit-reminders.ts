@@ -1,7 +1,10 @@
 import { getAllUsers } from '@/lib/db/user'
 import habitBot from '@/lib/telegram/bots/habitBot/habitBot'
 import { NotionHabitDatabase } from '@/lib/util/notion/NotionHabitDatabase'
+import { formatInTimeZone } from 'date-fns-tz'
 import type { NextApiRequest, NextApiResponse } from 'next'
+
+const DEFAULT_TIMEZONE = 'America/New_York'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!process.env.NOTION_API_KEY) {
@@ -9,7 +12,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    for (const { telegramId, habitDatabaseId } of await getAllUsers()) {
+    for (const {
+      telegramId,
+      habitDatabaseId,
+      timezone = DEFAULT_TIMEZONE,
+    } of await getAllUsers()) {
       if (!telegramId || !habitDatabaseId) continue
 
       const habitDatabase = await new NotionHabitDatabase(
@@ -17,13 +24,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         habitDatabaseId
       )
 
-      const habits = await habitDatabase.getHabits()
-      for (const { reminders, name } of habits) {
-        if (reminders.length === 0) continue
+      // Get current hour in user's timezone
+      const userLocalHour = parseInt(formatInTimeZone(new Date(), timezone, 'H'))
 
-        // if the reminder is within 15 minutes of now, send a message
-        const now = new Date()
-        if (reminders.some(reminder => reminder === now.getHours())) {
+      const habits = await habitDatabase.getHabits()
+      for (const { reminders = [], name } of habits) {
+        if (reminders.some(reminder => reminder === userLocalHour)) {
           await habitBot.telegram.sendMessage(telegramId, `Reminder for habit: ${name}`)
         }
       }

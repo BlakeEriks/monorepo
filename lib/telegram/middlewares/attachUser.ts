@@ -6,7 +6,6 @@ const prisma = new PrismaClient()
 
 // Middleware to attach user to request
 const attachUser: MiddlewareFn<HabitContext | QuippetContext> = async (ctx, next) => {
-  console.log('attachUser', ctx.message)
   const from = ctx.message?.from || ctx.callbackQuery?.from
 
   if (!from) {
