@@ -6,7 +6,6 @@ import { subDays } from 'date-fns'
 import { formatInTimeZone } from 'date-fns-tz'
 import type { NextApiRequest, NextApiResponse } from 'next'
 
-const DEFAULT_TIMEZONE = 'America/New_York'
 const HABIT_STATUS_TIME = 5
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
