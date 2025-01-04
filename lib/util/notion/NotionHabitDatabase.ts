@@ -98,12 +98,23 @@ export class NotionHabitDatabase {
   }
 
   /** Retrieves recent pages from the database. */
-  async getRecentPages(limit = 10) {
-    const response = await this.notion.databases.query({
+  async getRecentPages(limit = 10, after?: Date) {
+    const query: any = {
       database_id: this.databaseId,
       sorts: [{ property: 'Date', direction: 'descending' }],
       page_size: limit,
-    })
+    }
+
+    if (after) {
+      query.filter = {
+        property: 'Date',
+        date: {
+          on_or_after: after.toISOString().split('T')[0],
+        },
+      }
+    }
+
+    const response = await this.notion.databases.query(query)
     return response.results as PageObjectResponse[]
   }
 
