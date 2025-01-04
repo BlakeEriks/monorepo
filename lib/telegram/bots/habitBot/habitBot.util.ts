@@ -87,13 +87,20 @@ export const getTodayHabitsMarkdown = async (ctx: HabitContext) => {
       if (property) {
         switch (property.type) {
           case NotionPropertyType.DATE:
-            status = property.date?.start ? '■ Completed' : '□ Not done'
+            status = property.date?.start
+              ? `■ ${new Date(property.date.start).toLocaleTimeString('en-US', {
+                  hour: 'numeric',
+                  minute: 'numeric',
+                  timeZone: timezone,
+                  hour12: true,
+                })}`
+              : '□ Not done'
             break
           case NotionPropertyType.CHECKBOX:
             status = property.checkbox ? '■ Completed' : '□ Not done'
             break
           case NotionPropertyType.NUMBER:
-            status = `□ ${property.number ?? 0} reps`
+            status = `□ ${property.number ?? 0}`
             break
         }
       }
