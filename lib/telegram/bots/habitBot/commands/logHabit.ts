@@ -18,7 +18,7 @@ logHabitScene.enter(async ctx => {
     if (ctx.session.habit.type === NotionPropertyType.CHECKBOX) {
       return handleRecordHabit(ctx.session.habit, 'true', ctx)
     }
-    return handleHabitSelection(ctx.session.habit.emoji, ctx)
+    return handleHabitSelection(ctx.session.habit.id, ctx)
   }
 
   if (!ctx.habitDatabase) {
@@ -43,17 +43,14 @@ logHabitScene.on(message('text'), async ctx => {
   return handleHabitSelection(ctx.message.text, ctx)
 })
 
-const handleHabitSelection = async (emoji: string, ctx: HabitContext) => {
-  const habits = await ctx.habitDatabase.getHabits()
-  const habit = habits.find(habit => habit.emoji === emoji)
+const handleHabitSelection = async (id: string, ctx: HabitContext) => {
+  const habit = await ctx.habitDatabase.getHabitById(id)
+  if (!habit) return ctx.reply('Invalid habit selection. Please try again.')
 
-  if (!habit) {
-    return ctx.reply('Invalid habit selection. Please try again.')
-  }
   ctx.session.habit = habit
 
   // Return a keyboard with the recent values for that habit
-  const recentValues = ctx.session.recentValues[habit.emoji] ?? []
+  const recentValues = ctx.session.habitMeta[habit.id]?.recentValues ?? []
   const keyboard = Markup.keyboard(recentValues.map(value => value.toString()))
     .oneTime()
     .resize()
