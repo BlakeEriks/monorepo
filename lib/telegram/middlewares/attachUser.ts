@@ -1,11 +1,15 @@
 import { PrismaClient } from '@prisma/client'
 import type { MiddlewareFn } from 'telegraf'
 import type { HabitContext, QuippetContext } from '../types'
+import { ProteinContext } from '../bots/proteinBot/proteinBot'
 
 const prisma = new PrismaClient()
 
 // Middleware to attach user to request
-const attachUser: MiddlewareFn<HabitContext | QuippetContext> = async (ctx, next) => {
+const attachUser: MiddlewareFn<HabitContext | QuippetContext | ProteinContext> = async (
+  ctx,
+  next,
+) => {
   const from = ctx.message?.from || ctx.callbackQuery?.from
 
   if (!from) {

@@ -9,7 +9,7 @@ const env = process.argv.includes('--env')
 // Load the environment variables from the chosen .env file
 dotenv.config({ path: `.env.${env}` })
 
-const BOTS = ['habit', 'quippet']
+const BOTS = ['habit', 'quippet', 'protein']
 
 const command = process.argv[2]
 const bot = process.argv[3]
