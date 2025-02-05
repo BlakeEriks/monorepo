@@ -51,6 +51,7 @@ text
 ├── prisma/ # Database schema and migrations
 └── scripts/ # Utility scripts
 
+
 ## Cron Jobs
 
 Schedules are made on [Cron-Job.org](https://console.cron-job.org/dashboard)
