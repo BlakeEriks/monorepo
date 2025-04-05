@@ -1,6 +1,8 @@
+import { saveQuote } from '@/lib/db/quippets'
 import { QUOTE_COMMANDS, QUOTE_SCENES } from '@/lib/telegram/commands/quippets'
 import attachUser from '@/lib/telegram/middlewares/attachUser'
 import type { QuippetContext } from '@/lib/telegram/types'
+import { parseQuote } from '@/lib/util/openai'
 import { Markup, Scenes, session, Telegraf } from 'telegraf'
 import { message } from 'telegraf/filters'
 
@@ -33,10 +35,6 @@ if (!process.env.QUIPPET_BOT_TOKEN) {
 
 const quippetBot = new Telegraf<QuippetContext>(process.env.QUIPPET_BOT_TOKEN)
 
-// quippetBot.command('new', async ctx => {
-//   ctx.reply('What is the quote?')
-// })
-
 const stage = new Scenes.Stage<QuippetContext>([
   ...QUOTE_SCENES,
   // ...REMINDER_SCENES,
@@ -46,8 +44,6 @@ const stage = new Scenes.Stage<QuippetContext>([
 quippetBot.use(Telegraf.log())
 quippetBot.use(session())
 quippetBot.use(attachUser)
-// quippetBot.use(attachHabits)
-// quippetBot.use(saveMessage)
 quippetBot.use(stage.middleware())
 
 const allCommands = commandGroups.flatMap(({ commands }) => commands)
@@ -56,6 +52,13 @@ for (const { name, action } of allCommands) {
 }
 
 // Default
-quippetBot.on(message('text'), async ctx => ctx.reply(DEFAULT_MESSAGE, Markup.removeKeyboard()))
+quippetBot.on(message('text'), async ctx => {
+  const quote = await parseQuote({ text: ctx.message.text })
+  const quoteWithUser = { ...quote, userId: ctx.user.id }
+  await saveQuote(quoteWithUser)
+  return ctx.reply('Quote saved! 📚\n\nUse /help to see all available commands.')
+})
+
+quippetBot.command('help', async ctx => ctx.reply(DEFAULT_MESSAGE, Markup.removeKeyboard()))
 
 export default quippetBot
