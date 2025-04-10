@@ -11,6 +11,7 @@
     "start": "next start",
     "lint": "next lint",
     "migrate:dev": "dotenv -e .env.dev npx prisma migrate dev",
+    "migrate:reset:dev": "dotenv -e .env.dev npx prisma migrate reset dev",
     "migrate:prod": "dotenv -e .env.prod npx prisma migrate dev",
     "telegram:set": "tsx scripts/telegramWebhook.ts set",
     "telegram:unset": "tsx scripts/telegramWebhook.ts unset",
@@ -32,7 +33,7 @@
   "dependencies": {
     "@aws-sdk/client-ses": "^3.687.0",
     "@notionhq/client": "^2.2.15",
-    "@prisma/client": "^5.22.0",
+    "@prisma/client": "^6.6.0",
     "axios": "^1.7.7",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
@@ -41,6 +42,7 @@
     "next": "15.0.3",
     "openai": "^4.71.1",
     "pg": "^8.13.1",
+    "prisma": "^6.6.0",
     "react": "19.0.0-rc-66855b96-20241106",
     "react-dom": "19.0.0-rc-66855b96-20241106",
     "sequelize": "^6.37.5",
@@ -58,7 +60,7 @@
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5",
-    "tsx": "^4.7.1"
+    "tsx": "^4.7.1",
+    "typescript": "^5"
   }
 }

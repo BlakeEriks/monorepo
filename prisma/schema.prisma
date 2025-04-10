@@ -142,21 +142,62 @@ model Reminder {
 }
 
 // ------------ AI Newsletter Project Models ------------ //
-enum NewsletterStatus {
-  PROPOSED
+enum TopicStatus {
+  SUGGESTED
+  VOTING
   PUBLISHED
+  ARCHIVED
 
-  @@map("newsletter_status")
+  @@schema("ai_newsletter")
+}
+
+// Newsletter subscriber model - completely separate from main User
+model Subscriber {
+  id        Int              @id @default(autoincrement())
+  email     String           @unique
+  name      String?
+  createdAt DateTime         @default(now())
+  active    Boolean          @default(true)
+  votes     NewsletterVote[]
+
+  @@map("subscribers")
+  @@schema("ai_newsletter")
+}
+
+model NewsletterTopic {
+  id          Int              @id @default(autoincrement())
+  title       String
+  description String?
+  status      TopicStatus      @default(SUGGESTED)
+  votes       Int              @default(0)
+  createdAt   DateTime         @default(now())
+  newsletters Newsletter[]
+  userVotes   NewsletterVote[]
+
+  @@map("topics")
+  @@schema("ai_newsletter")
+}
+
+model NewsletterVote {
+  id           Int             @id @default(autoincrement())
+  subscriberId Int?
+  subscriber   Subscriber?     @relation(fields: [subscriberId], references: [id])
+  topicId      Int
+  topic        NewsletterTopic @relation(fields: [topicId], references: [id])
+  createdAt    DateTime        @default(now())
+  emailHash    String? // For tracking anonymous votes
+
+  @@map("votes")
   @@schema("ai_newsletter")
 }
 
 model Newsletter {
-  id          Int              @id @default(autoincrement())
-  title       String           @unique
-  status      NewsletterStatus @default(PROPOSED)
-  votes       Int              @default(0)
-  publishedAt DateTime?
-  content     String?
+  id          Int             @id @default(autoincrement())
+  topicId     Int
+  topic       NewsletterTopic @relation(fields: [topicId], references: [id])
+  publishedAt DateTime        @default(now())
+  content     String
+  performance Json? // Store engagement metrics (opens, clicks, etc.)
 
   @@map("newsletters")
   @@schema("ai_newsletter")
