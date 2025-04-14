@@ -8,105 +8,92 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ success: false, message: 'Method not allowed' })
   }
 
-  const { topicId, email, emailHash } = req.body
+  const { topicId, subscriberId, token } = req.body
 
   if (!topicId) {
     return res.status(400).json({ success: false, message: 'Topic ID is required' })
   }
 
+  // Now require subscriber information
+  if (!subscriberId || !token) {
+    return res.status(400).json({
+      success: false,
+      message: 'Subscriber ID and token are required for voting',
+    })
+  }
+
   try {
-    // Check if the topic exists and is in VOTING status
+    const election = await prisma.election.findFirst({
+      where: { endedAt: null },
+      include: {
+        topics: true,
+      },
+    })
+
+    if (!election)
+      return res.status(400).json({ success: false, message: 'No active election found' })
+
+    // Check if the topic exists and is in the current election
     const topic = await prisma.newsletterTopic.findUnique({
       where: { id: Number(topicId) },
     })
 
-    if (!topic) {
+    if (!topic || !election.topics.some((t) => t.topicId === Number(topicId))) {
       return res.status(404).json({ success: false, message: 'Topic not found' })
     }
 
-    if (topic.status !== 'VOTING') {
-      return res
-        .status(400)
-        .json({ success: false, message: 'This topic is not currently accepting votes' })
+    // Verify the subscriber with their UUID token
+    const subscriber = await prisma.subscriber.findUnique({
+      where: { id: Number(subscriberId) },
+    })
+
+    if (!subscriber) {
+      return res.status(404).json({ success: false, message: 'Subscriber not found' })
     }
 
-    let subscriberId: number | null = null
+    // Verify the provided token matches the subscriber's UUID
+    if (subscriber.uuid !== token) {
+      return res.status(403).json({ success: false, message: 'Invalid token for this subscriber' })
+    }
 
-    // If email is provided, look up or create subscriber
-    if (email && email.includes('@')) {
-      // Check if subscriber exists
-      const subscriber = await prisma.subscriber.findUnique({
-        where: { email },
+    // Check if subscriber is active
+    if (!subscriber.active) {
+      return res.status(400).json({ success: false, message: 'This subscriber is not active' })
+    }
+
+    // Check if this subscriber has already voted for this topic
+    const existingVote = await prisma.newsletterVote.findFirst({
+      where: {
+        subscriberId: Number(subscriberId),
+        topicId: Number(topicId),
+        electionId: Number(election.id),
+      },
+    })
+
+    if (existingVote) {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already voted for this topic',
+        alreadyVoted: true,
       })
-
-      if (subscriber) {
-        subscriberId = subscriber.id
-
-        // Check if this subscriber has already voted
-        const existingVote = await prisma.newsletterVote.findFirst({
-          where: {
-            subscriberId: subscriberId,
-            topicId: Number(topicId),
-          },
-        })
-
-        if (existingVote) {
-          return res
-            .status(400)
-            .json({ success: false, message: 'You have already voted for this topic' })
-        }
-      } else {
-        // Create a new subscriber
-        const newSubscriber = await prisma.subscriber.create({
-          data: {
-            email,
-            active: true,
-          },
-        })
-
-        subscriberId = newSubscriber.id
-      }
-    }
-    // If emailHash is provided (anonymous vote), check if it has voted before
-    else if (emailHash) {
-      const existingVote = await prisma.newsletterVote.findFirst({
-        where: {
-          emailHash,
-          topicId: Number(topicId),
-        },
-      })
-
-      if (existingVote) {
-        return res
-          .status(400)
-          .json({ success: false, message: 'You have already voted for this topic' })
-      }
     }
 
-    // Use transaction to create vote and update topic vote count
-    const [vote, updatedTopic] = await prisma.$transaction([
-      // Create the vote
-      prisma.newsletterVote.create({
-        data: {
-          subscriberId,
-          topicId: Number(topicId),
-          emailHash,
-        },
-      }),
-
-      // Increment the topic's vote count
-      prisma.newsletterTopic.update({
-        where: { id: Number(topicId) },
-        data: {
-          votes: { increment: 1 },
-        },
-      }),
-    ])
+    // Create vote
+    await prisma.newsletterVote.create({
+      data: {
+        subscriberId: Number(subscriberId),
+        topicId: Number(topicId),
+        electionId: Number(election.id),
+      },
+    })
 
     return res.status(200).json({
       success: true,
       message: 'Vote recorded successfully',
-      data: { topic: updatedTopic },
+      data: {
+        topic: topic,
+        subscriberEmail: subscriber.email,
+      },
     })
   } catch (error) {
     console.error('Error recording vote:', error)

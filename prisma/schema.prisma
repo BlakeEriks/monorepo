@@ -151,9 +151,37 @@ enum TopicStatus {
   @@schema("ai_newsletter")
 }
 
+// New model to track election cycles
+model Election {
+  id             Int              @id @default(autoincrement())
+  startedAt      DateTime         @default(now())
+  endedAt        DateTime?
+  winningTopicId Int?
+  winningTopic   NewsletterTopic? @relation("WinningTopic", fields: [winningTopicId], references: [id])
+  topics         ElectionTopic[]
+  votes          NewsletterVote[]
+
+  @@map("elections")
+  @@schema("ai_newsletter")
+}
+
+// Junction table for elections and topics
+model ElectionTopic {
+  id         Int             @id @default(autoincrement())
+  electionId Int
+  topicId    Int
+  election   Election        @relation(fields: [electionId], references: [id])
+  topic      NewsletterTopic @relation(fields: [topicId], references: [id])
+
+  @@unique([electionId, topicId])
+  @@map("election_topics")
+  @@schema("ai_newsletter")
+}
+
 // Newsletter subscriber model - completely separate from main User
 model Subscriber {
   id        Int              @id @default(autoincrement())
+  uuid      String           @unique @default(uuid()) // Add a UUID for secure identification
   email     String           @unique
   name      String?
   createdAt DateTime         @default(now())
@@ -165,14 +193,16 @@ model Subscriber {
 }
 
 model NewsletterTopic {
-  id          Int              @id @default(autoincrement())
-  title       String
-  description String?
-  status      TopicStatus      @default(SUGGESTED)
-  votes       Int              @default(0)
-  createdAt   DateTime         @default(now())
-  newsletters Newsletter[]
-  userVotes   NewsletterVote[]
+  id                    Int              @id @default(autoincrement())
+  title                 String
+  description           String?
+  status                TopicStatus      @default(SUGGESTED)
+  electionsParticipated Int              @default(0)
+  createdAt             DateTime         @default(now())
+  newsletters           Newsletter[]
+  userVotes             NewsletterVote[]
+  elections             ElectionTopic[]
+  wonElections          Election[]       @relation("WinningTopic")
 
   @@map("topics")
   @@schema("ai_newsletter")
@@ -184,8 +214,9 @@ model NewsletterVote {
   subscriber   Subscriber?     @relation(fields: [subscriberId], references: [id])
   topicId      Int
   topic        NewsletterTopic @relation(fields: [topicId], references: [id])
+  electionId   Int // Link to the specific election this vote is for
+  election     Election        @relation(fields: [electionId], references: [id])
   createdAt    DateTime        @default(now())
-  emailHash    String? // For tracking anonymous votes
 
   @@map("votes")
   @@schema("ai_newsletter")

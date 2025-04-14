@@ -5,18 +5,74 @@ import { NextApiRequest, NextApiResponse } from 'next'
 const prisma = new PrismaClient()
 const sesClient = new SESClient({ region: process.env.AWS_REGION })
 
-async function generateNewsletterContent() {
+// Define interfaces for our data structures
+interface TopicWithVotes {
+  id: number;
+  title: string;
+  description: string | null;
+  status: string;
+  electionsParticipated: number;
+  createdAt: Date;
+  electionId: number;
+  voteCount: number;
+}
+
+async function generateNewsletterContent(recipientEmail: string) {
   try {
-    // Get top 3 voting topics
-    const topVotingTopics = await prisma.newsletterTopic.findMany({
+    // First get the subscriber to get their UUID
+    const subscriber = await prisma.subscriber.findUnique({
+      where: { email: recipientEmail }
+    })
+
+    if (!subscriber) {
+      throw new Error(`Subscriber with email ${recipientEmail} not found`)
+    }
+
+    // Get the current active election
+    const activeElection = await prisma.election.findFirst({
       where: {
-        status: 'VOTING',
+        endedAt: null
       },
       orderBy: {
-        votes: 'desc',
+        startedAt: 'desc'
       },
-      take: 3,
+      include: {
+        topics: {
+          include: {
+            topic: true
+          }
+        }
+      }
     })
+
+    let topVotingTopics: TopicWithVotes[] = []
+    
+    if (activeElection) {
+      // Get all topics in the current election
+      const electionTopics = activeElection.topics.map(et => ({
+        ...et.topic,
+        electionId: activeElection.id
+      }))
+
+      // Get vote counts for each topic in this election
+      const topicsWithVotes = await Promise.all(
+        electionTopics.map(async (topic) => {
+          const voteCount = await prisma.newsletterVote.count({
+            where: {
+              topicId: topic.id,
+              electionId: activeElection.id
+            }
+          })
+          return {
+            ...topic,
+            voteCount
+          } as TopicWithVotes
+        })
+      )
+
+      // Sort by vote count
+      topVotingTopics = topicsWithVotes.sort((a, b) => b.voteCount - a.voteCount)
+    }
 
     // Format text content
     let textContent = `
@@ -37,92 +93,91 @@ Click on one of the options below to vote:
 <ol>
 `
 
-    // Add topics to both formats
+    // Add topics to both formats with the subscriber's UUID in the links for secure identification
     if (topVotingTopics.length > 0) {
       topVotingTopics.forEach((topic, index) => {
-        const voteUrl = `http://localhost:3000?vote=${topic.id}`
+        // Include UUID in the voting URL instead of email for secure identification
+        const voteUrl = `http://localhost:3000?vote=${topic.id}&subscriberId=${subscriber.id}&token=${encodeURIComponent(subscriber.uuid)}&electionId=${topic.electionId}`
         textContent += `\n${index + 1}. [${topic.title}](${voteUrl})`
-        htmlContent += `<li><a href="${voteUrl}">${topic.title}</a> - ${topic.votes} votes</li>`
+        htmlContent += `<li><a href="${voteUrl}">${topic.title}</a> - ${topic.description || 'No description'} (${topic.voteCount} votes)</li>`
       })
     } else {
-      // Default topics if none found in database
-      textContent += `
-1. [Whales](http://localhost:3000?vote=1)
-2. [Roman Empire](http://localhost:3000?vote=2)
-3. [Penguins](http://localhost:3000?vote=3)`
-
-      htmlContent += `
-<li><a href="http://localhost:3000?vote=1">Whales</a></li>
-<li><a href="http://localhost:3000?vote=2">Roman Empire</a></li>
-<li><a href="http://localhost:3000?vote=3">Penguins</a></li>`
+      // Fallback message if no topics are in voting status
+      textContent += `\nNo topics available for voting at this time. Please check back later.`
+      htmlContent += `<li>No topics available for voting at this time. Please check back later.</li>`
     }
 
     // Add unsubscribe link
-    textContent += `\n\nTo unsubscribe, visit: http://localhost:3000/unsubscribe`
-    htmlContent += `\n</ol><p style="margin-top: 20px; font-size: 12px;"><a href="http://localhost:3000/unsubscribe">Unsubscribe</a></p>`
+    textContent += `\n\nTo unsubscribe, visit: http://localhost:3000/unsubscribe?email=${encodeURIComponent(recipientEmail)}&token=${encodeURIComponent(subscriber.uuid)}`
+    htmlContent += `\n</ol><p style="margin-top: 20px; font-size: 12px;"><a href="http://localhost:3000/unsubscribe?email=${encodeURIComponent(recipientEmail)}&token=${encodeURIComponent(subscriber.uuid)}">Unsubscribe</a></p>`
 
     return { textContent, htmlContent }
   } catch (error) {
     console.error('Error generating newsletter content:', error)
-    // Return default content if error occurs
+    // Return generic content if error occurs since we can't generate personalized content
     return {
-      textContent: TEST_NEWSLETTER_CONTENT,
-      htmlContent: `
-        <h1>Test Newsletter</h1>
-        <p>This is a test newsletter.</p>
-        <h2>Vote for the next topic!</h2>
-        <p>Click on one of the options below to vote:</p>
-        <ol>
-          <li><a href="http://localhost:3000?vote=1">Whales</a></li>
-          <li><a href="http://localhost:3000?vote=2">Roman Empire</a></li>
-          <li><a href="http://localhost:3000?vote=3">Penguins</a></li>
-        </ol>
-        <p style="margin-top: 20px; font-size: 12px;"><a href="http://localhost:3000/unsubscribe">Unsubscribe</a></p>
-      `,
-    }
-  }
-}
-
-const TEST_NEWSLETTER_CONTENT = `
+      textContent: `
 # Test Newsletter
 
 This is a test newsletter.
 
-## Vote for the next topic!
-Click on one of the options below to vote:
-
-1. [Whales](http://localhost:3000?vote=1)
-2. [Roman Empire](http://localhost:3000?vote=2)
-3. [Penguins](http://localhost:3000?vote=3)
-
-To unsubscribe, visit: http://localhost:3000/unsubscribe
-`
+Please visit http://localhost:3000 to vote on topics or manage your subscription.
+`,
+      htmlContent: `
+        <h1>Test Newsletter</h1>
+        <p>This is a test newsletter.</p>
+        <p>Please visit <a href="http://localhost:3000">our website</a> to vote on topics or manage your subscription.</p>
+      `
+    }
+  }
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
     try {
-      // Generate newsletter content with voting options
-      const { textContent, htmlContent } = await generateNewsletterContent()
-
       // Get all active subscribers
       const activeSubscribers = await prisma.subscriber.findMany({
         where: {
-          active: true,
-        },
+          active: true
+        }
       })
 
       if (activeSubscribers.length === 0) {
         return res.status(400).json({
           success: false,
-          message: 'No active subscribers found to send the newsletter to.',
+          message: 'No active subscribers found to send the newsletter to.'
         })
       }
 
-      // For testing purposes, just send to the first subscriber or a test email
-      const testEmail =
-        activeSubscribers.length > 0 ? activeSubscribers[0].email : 'blakeeriks.dev@gmail.com'
+      // Check if we have active topics in voting status
+      const votingTopics = await prisma.newsletterTopic.findMany({
+        where: {
+          status: 'VOTING'
+        }
+      })
 
-      console.log('Sending newsletter to:', testEmail)
+      // If we don't have any voting topics, we need to start a new election cycle
+      if (votingTopics.length === 0) {
+        // Import the function dynamically to avoid circular dependency
+        const { handleNewElectionCycle } = await import('./newsletter/select-topics')
+        const result = await handleNewElectionCycle()
+        
+        if (!result.success) {
+          return res.status(500).json({
+            success: false,
+            message: 'Failed to start new election cycle',
+            error: result.error
+          })
+        }
+      }
+
+      // In a real production environment, you would loop through all subscribers
+      // and send personalized emails to each one with their own voting links
+      // For testing, we'll just send to the first subscriber
+      const testEmail = activeSubscribers[0].email
+
+      // Generate personalized newsletter content with subscriber's UUID in voting links
+      const { textContent, htmlContent } = await generateNewsletterContent(testEmail)
 
       const params = {
         Source: 'blakeeriks.dev@gmail.com', // Verified email in SES
@@ -147,7 +202,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         success: true,
         message: `Newsletter sent to ${activeSubscribers.length} subscribers!`,
         testMode: true,
-        testEmail,
+        testEmail
       })
     } catch (error) {
       console.error('Error sending email:', error)
