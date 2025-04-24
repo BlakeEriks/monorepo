@@ -8,7 +8,6 @@
     "proteinBot": "dotenv -e .env.dev npx nodemon proteinBot",
     "quippetBot": "dotenv -e .env.dev npx nodemon quippetBot",
     "build": "npx prisma generate && next build",
-    "vercel-build": "npm install && npx prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "migrate:dev": "dotenv -e .env.dev npx prisma migrate dev",
