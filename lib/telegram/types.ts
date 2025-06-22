@@ -42,6 +42,26 @@ export interface HabitCommand {
   action: (ctx: HabitContext) => void
 }
 
+/* Habit Sheet types */
+interface HabitSheetSession extends Scenes.SceneSession {
+  step: number
+  habitSheetURL?: string
+  habitSheetId?: string
+  habitMeta: Record<string, HabitMeta>
+}
+
+export interface HabitSheetContext extends Context {
+  user: User
+  session: HabitSheetSession
+  scene: Scenes.SceneContextScene<HabitSheetContext>
+}
+
+export interface HabitSheetCommand {
+  name: string
+  description: string
+  action: (ctx: HabitSheetContext) => void
+}
+
 /* Quippet types */
 interface QuippetSession extends Scenes.SceneSession {
   expecting: keyof Quote

@@ -91,7 +91,7 @@ export default function QuotesIndex({ quotes: initialQuotes, users }: QuotesInde
 
         <div className="bg-white rounded-lg shadow-md">
           <div className="p-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold">{filteredQuotes.length} Quotes</h2>
+            <h2 className="text-lg font-semibold text-gray-600">{filteredQuotes.length} Quotes</h2>
           </div>
 
           {filteredQuotes.length === 0 ? (
@@ -102,7 +102,7 @@ export default function QuotesIndex({ quotes: initialQuotes, users }: QuotesInde
             <div className="divide-y divide-gray-200">
               {filteredQuotes.map((quote) => (
                 <div key={quote.id} className="p-6">
-                  <blockquote className="text-lg italic mb-2">
+                  <blockquote className="text-lg italic mb-2 text-gray-600">
                     &ldquo;{quote.content}&rdquo;
                   </blockquote>
 

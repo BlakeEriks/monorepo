@@ -7,6 +7,7 @@
     "habitBot": "dotenv -e .env.dev npx nodemon habitBot",
     "proteinBot": "dotenv -e .env.dev npx nodemon proteinBot",
     "quippetBot": "dotenv -e .env.dev npx nodemon quippetBot",
+    "habitSheetBot": "dotenv -e .env.dev npx nodemon habitSheetBot",
     "build": "npx prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
@@ -15,7 +16,8 @@
     "migrate:prod": "dotenv -e .env.prod npx prisma migrate dev",
     "telegram:set": "tsx scripts/telegramWebhook.ts set",
     "telegram:unset": "tsx scripts/telegramWebhook.ts unset",
-    "telegram:get": "tsx scripts/telegramWebhook.ts get"
+    "telegram:get": "tsx scripts/telegramWebhook.ts get",
+    "sheet:data": "dotenv -e .env.dev tsx scripts/get-sheet-data.ts"
   },
   "nodemonConfig": {
     "ignore": [
@@ -42,8 +44,10 @@
     "date-fns-tz": "^3.2.0",
     "formidable": "^3.5.4",
     "geo-tz": "^8.1.2",
+    "googleapis": "^150.0.1",
     "lucide-react": "^0.488.0",
     "moment-timezone": "^0.5.46",
+    "motion": "^12.9.2",
     "next": "15.0.3",
     "openai": "^4.71.1",
     "pg": "^8.13.1",
